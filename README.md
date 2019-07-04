@@ -36,10 +36,10 @@ Options:
 Then you can do this wonderful requests in terminal
 ```bash
 # get a single field, e.g. version
-jora package.json version
+jora version <package.json
 
 # get all top level dependencies count
-jora package.json '(.dependencies.keys() + .devDependencies.keys()).size()'
+jora -i package.json -q '(.dependencies.keys() + .devDependencies.keys()).size()'
 
 # find dublicated packages
 npm ls --json | jora "
