@@ -50,32 +50,55 @@ function run() {
     return wrapper;
 }
 
-it('should output version', function() {
-    return run('-v')
-        .output(pkgJsonData.version);
-});
+it('should output version', () =>
+    run('-v')
+        .output(pkgJsonData.version)
+);
 
-it('should read content from stdin if no file specified', function() {
-    return run('version')
+it('should read content from stdin if no file specified', () =>
+    run('version')
         .input(JSON.stringify(pkgJsonData))
-        .output(JSON.stringify(pkgJsonData.version));
-});
+        .output(JSON.stringify(pkgJsonData.version))
+);
 
-it('should read from file', function() {
-    return run('-i', pkgJson, '-q', 'version')
-        .output(JSON.stringify(pkgJsonData.version));
-});
+it('should read from file', () =>
+    run('-i', pkgJson, '-q', 'version')
+        .output(JSON.stringify(pkgJsonData.version))
+);
 
 describe('pretty print', function() {
-    it('indentation should be 4 spaces by default', function() {
-        return run('dependencies.keys()', '-p')
+    it('indentation should be 4 spaces by default', () =>
+        run('dependencies.keys()', '-p')
             .input(JSON.stringify(pkgJsonData))
-            .output(JSON.stringify(Object.keys(pkgJsonData.dependencies), null, 4));
-    });
+            .output(JSON.stringify(Object.keys(pkgJsonData.dependencies), null, 4))
+    );
 
-    it('indentation should be as specified', function() {
-        return run('dependencies.keys()', '-p', '3')
+    it('indentation should be as specified', () =>
+        run('dependencies.keys()', '-p', '3')
             .input(JSON.stringify(pkgJsonData))
-            .output(JSON.stringify(Object.keys(pkgJsonData.dependencies), null, 3));
-    });
+            .output(JSON.stringify(Object.keys(pkgJsonData.dependencies), null, 3))
+    );
+});
+
+describe('errors', function() {
+    it('JSON parse error', () =>
+        assert.rejects(
+            () => run('foo').input('broken json'),
+            /JSON parse error/
+        )
+    );
+
+    it('Query prepare error', () =>
+        assert.rejects(
+            () => run('broken query').input('{}'),
+            /Jora query prepare error/
+        )
+    );
+
+    it('Query perform error', () =>
+        assert.rejects(
+            () => run('foo()').input('{}'),
+            /Query perform error/
+        )
+    );
 });
