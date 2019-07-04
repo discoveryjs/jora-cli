@@ -18,7 +18,7 @@ function processOptions(options, args) {
     let inputFile = options.input;
     let outputFile = options.output;
 
-    if (process.stdin.isTTY && !inputFile && !outputFile) {
+    if (process.stdin.isTTY && process.argv.length <= 2) {
         return null;
     }
 
@@ -52,7 +52,7 @@ function safeOperation(name, fn) {
 
 function prepareQuery(options) {
     return safeOperation('Jora query prepare', () =>
-        jora(options.query)
+        jora(options.query || '')
     );
 }
 

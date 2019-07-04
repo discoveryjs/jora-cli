@@ -5,14 +5,18 @@ const cmd = 'node';
 const pkgJson = path.join(__dirname, '../package.json');
 const pkgJsonData = require(pkgJson);
 
+function match(rx) {
+    return actual => rx.test(actual);
+}
+
 function run() {
     var args = [path.join(__dirname, '../bin/jora')].concat(Array.prototype.slice.call(arguments));
     var proc = child.spawn(cmd, args, { stdio: 'pipe' });
     var error = '';
     var wrapper = new Promise(function(resolve, reject) {
-        proc.once('exit', function(code) {
-            code ? reject(new Error(error)) : resolve();
-        });
+        proc.once('exit', code =>
+            code ? reject(new Error(error)) : resolve()
+        );
     });
 
     wrapper.input = function(data) {
@@ -31,15 +35,13 @@ function run() {
             .on('end', function() {
                 var data = buffer.join('').trim();
 
-                switch (typeof expected) {
-                    case 'function':
-                        expected(data);
-                        break;
-
-                    default:
-                        assert.equal(data, expected);
+                if (typeof expected === 'function') {
+                    expected(data);
+                } else {
+                    assert.equal(data, expected);
                 }
             });
+
         return wrapper;
     };
 
@@ -49,6 +51,22 @@ function run() {
 
     return wrapper;
 }
+
+// it('should output help when no arguments', () =>
+//     run()
+//         .output(match(/Usage:\s+jora/))
+// );
+
+it('should output help with `-h` or `--help`', () =>
+    run('-h')
+        .output(match(/Usage:\s+jora/))
+);
+
+it('should output data itself when no query', () =>
+    run()
+        .input('42')
+        .output('42')
+);
 
 it('should output version', () =>
     run('-v')
