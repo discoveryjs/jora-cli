@@ -9,7 +9,7 @@ Command line interface for [Jora](https://github.com/discoveryjs/jora)
 ## Install
 
 ```bash
-npm i -g jora
+npm i -g jora-cli
 ```
 
 ## Usage
@@ -36,13 +36,13 @@ Options:
 Then you can do this wonderful requests in terminal
 ```bash
 # get a single field, e.g. version
-jora version <package.json
+jora package.json version
 
-# get all dependencies as array
-jora -i package.json -q '.dependencies.keys() + .devDependencies.keys()'
+# get all top level dependencies count
+jora package.json '(.dependencies.keys() + .devDependencies.keys()).size()'
 
 # find dublicated packages
-npm ls --json | node jora "
+npm ls --json | jora "
     ..(dependencies.mapToArray())
         .group(<key>, <version>)
         .({ name: key, versions: value })
