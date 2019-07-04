@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const cli = require('clap');
-const jora = require('jora');
+const jora = require('jora/dist/jora');
 
 function readFromStream(stream, processBuffer) {
     const buffer = [];
@@ -51,7 +51,7 @@ function safeOperation(name, fn) {
 }
 
 function prepareQuery(options) {
-    return safeOperation('Jora query parse', () =>
+    return safeOperation('Jora query prepare', () =>
         jora(options.query)
     );
 }
@@ -63,7 +63,7 @@ function prepareData(source) {
 }
 
 function performQuery(query, data, context) {
-    return safeOperation('Perform query', () =>
+    return safeOperation('Query perform', () =>
         query(data, context)
     );
 }
