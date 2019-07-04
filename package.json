@@ -1,0 +1,54 @@
+{
+    "name": "jora-cli",
+    "version": "1.0.0",
+    "description": "Command line interface for Jora",
+    "keywords": [],
+    "homepage": "https://github.com/discoveryjs/jora-cli",
+    "maintainers": [
+        {
+            "name": "Roman Dvornov",
+            "email": "rdvornov@gmail.com",
+            "github-username": "lahmatiy"
+        },
+        {
+            "name": "Roman Dvornov",
+            "email": "rdvornov@gmail.com",
+            "github-username": "lahmatiy"
+        }
+    ],
+    "license": "MIT",
+    "repository": "discoveryjs/jora-cli",
+    "bugs": {
+        "url": "https://github.com/discoveryjs/jora-cli/issues"
+    },
+    "bin": {
+        "jora": "./bin/jora"
+    },
+    "main": "./index",
+    "scripts": {
+        "test": "mocha --reporter progress",
+        "lint": "eslint *.js test",
+        "lint-and-test": "npm run lint && npm test",
+        "coverage": "nyc npm test",
+        "travis": "nyc npm run lint-and-test && npm run coveralls",
+        "coveralls": "nyc report --reporter=text-lcov | coveralls"
+    },
+    "dependencies": {
+        "clap": "^1.0.9",
+        "csso": "^3.2.0",
+        "jora": "1.0.0-alpha.10"
+    },
+    "devDependencies": {
+        "coveralls": "^3.0.4",
+        "eslint": "^6.0.1",
+        "mocha": "^5.2.0",
+        "nyc": "^14.1.0"
+    },
+    "engines": {
+        "node": ">=8.0.0"
+    },
+    "files": [
+        "bin",
+        "index.js"
+    ]
+}

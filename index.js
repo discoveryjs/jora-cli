@@ -1,0 +1,120 @@
+const fs = require('fs');
+const path = require('path');
+const cli = require('clap');
+const jora = require('jora');
+
+function readFromStream(stream, processBuffer) {
+    const buffer = [];
+
+    stream
+        .setEncoding('utf8')
+        .on('data', chunk => buffer.push(chunk))
+        .on('end', () => processBuffer(buffer.join('')));
+}
+
+function processOptions(options, args) {
+    const query = options.query || args[0];
+    const pretty = options.pretty || false;
+    let inputFile = options.input;
+    let outputFile = options.output;
+
+    if (process.stdin.isTTY && !inputFile && !outputFile) {
+        return null;
+    }
+
+    if (!inputFile) {
+        inputFile = '<stdin>';
+    } else {
+        inputFile = path.resolve(process.cwd(), inputFile);
+    }
+
+    if (outputFile) {
+        outputFile = path.resolve(process.cwd(), outputFile);
+    }
+
+    return {
+        query,
+        pretty,
+        inputFile,
+        outputFile
+    };
+}
+
+function safeOperation(name, fn) {
+    try {
+        return fn();
+    } catch (e) {
+        console.error(`${name} error`);
+        console.error(e.message);
+        process.exit(2);
+    }
+}
+
+function prepareQuery(options) {
+    return safeOperation('Jora query parse', () =>
+        jora(options.query)
+    );
+}
+
+function prepareData(source) {
+    return safeOperation('JSON parse', () =>
+        JSON.parse(source)
+    );
+}
+
+function performQuery(query, data, context) {
+    return safeOperation('Perform query', () =>
+        query(data, context)
+    );
+}
+
+function serializeResult(data, options) {
+    return safeOperation('Serialize query result', () =>
+        JSON.stringify(data, null, options.pretty || undefined)
+    );
+}
+
+function processStream(options) {
+    const query = prepareQuery(options);
+    const inputStream = options.inputFile === '<stdin>'
+        ? process.stdin
+        : fs.createReadStream(options.inputFile);
+
+    readFromStream(inputStream, function(source) {
+        const data = prepareData(source);
+        const result = performQuery(query, data, undefined);
+        const serializedResult = serializeResult(result, options);
+
+        if (options.outputFile) {
+            fs.writeFileSync(options.outputFile, serializedResult, 'utf-8');
+        } else {
+            console.log(serializedResult);
+        }
+    });
+}
+
+var command = cli.create('csso', '[query]')
+    .version(require('./package.json').version)
+    .option('-q, --query <query>', 'Jora uqery')
+    .option('-i, --input <filename>', 'Input file')
+    .option('-o, --output <filename>', 'Output file (result outputs to stdout if not set)')
+    .option('-p, --pretty [indent]', 'Pretty print with desired indentation (4 spaces by default)', value =>
+        value === undefined ? 4 : Number(value) || false
+    , false)
+    .action(function(args) {
+        var options = processOptions(this.values, args);
+
+        if (options === null) {
+            this.showHelp();
+            return;
+        }
+
+        processStream(options);
+    });
+
+module.exports = {
+    run: command.run.bind(command),
+    isCliError: function(err) {
+        return err instanceof cli.Error;
+    }
+};
