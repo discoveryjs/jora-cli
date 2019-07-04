@@ -18,7 +18,7 @@ npm i -g jora-cli
 > jora -h
 Usage:
 
-  csso [query] [options]
+  jora [query] [options]
 
 Options:
 

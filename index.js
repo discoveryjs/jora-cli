@@ -93,7 +93,7 @@ function processStream(options) {
     });
 }
 
-var command = cli.create('csso', '[query]')
+var command = cli.create('jora', '[query]')
     .version(require('./package.json').version)
     .option('-q, --query <query>', 'Jora query')
     .option('-i, --input <filename>', 'Input file')

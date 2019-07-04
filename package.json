@@ -35,7 +35,6 @@
     },
     "dependencies": {
         "clap": "^1.0.9",
-        "csso": "^3.2.0",
         "jora": "1.0.0-alpha.10"
     },
     "devDependencies": {
