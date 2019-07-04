@@ -95,10 +95,10 @@ function processStream(options) {
 
 var command = cli.create('csso', '[query]')
     .version(require('./package.json').version)
-    .option('-q, --query <query>', 'Jora uqery')
+    .option('-q, --query <query>', 'Jora query')
     .option('-i, --input <filename>', 'Input file')
-    .option('-o, --output <filename>', 'Output file (result outputs to stdout if not set)')
-    .option('-p, --pretty [indent]', 'Pretty print with desired indentation (4 spaces by default)', value =>
+    .option('-o, --output <filename>', 'Output file (outputs to stdout if not set)')
+    .option('-p, --pretty [indent]', 'Pretty print with optionally specified indentation(4 spaces by default)', value =>
         value === undefined ? 4 : Number(value) || false
     , false)
     .action(function(args) {
