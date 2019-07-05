@@ -4,7 +4,7 @@
 [![Build Status](https://travis-ci.org/discoveryjs/jora-cli.svg?branch=master)](https://travis-ci.org/discoveryjs/jora-cli)
 [![Coverage Status](https://coveralls.io/repos/github/discoveryjs/jora-cli/badge.svg?branch=master)](https://coveralls.io/github/discoveryjs/jora-cli?)
 
-Command line interface for [Jora](https://github.com/discoveryjs/jora)
+Command line interface for [Jora](https://github.com/discoveryjs/jora) (a JSON query language)
 
 ## Install
 
@@ -25,8 +25,7 @@ Options:
   -h, --help               Output usage information
   -i, --input <filename>   Input file
   -o, --output <filename>  Output file (outputs to stdout if not set)
-  -p, --pretty [indent]    Pretty print with optionally specified indentation(4
-                           spaces by default)
+  -p, --pretty [indent]    Pretty print with optionally specified indentation (4 spaces by default)
   -q, --query <query>      Jora query
   -v, --version            Output version
 ```
@@ -39,9 +38,9 @@ Then you can do this wonderful requests in terminal
 jora version <package.json
 
 # get all top level dependencies count
-jora -i package.json -q '(.dependencies.keys() + .devDependencies.keys()).size()'
+jora -i package.json -q '(dependencies.keys() + devDependencies.keys()).size()'
 
-# find dublicated packages
+# find packages with more than a single version
 npm ls --json | jora "
     ..(dependencies.mapToArray())
         .group(<key>, <version>)
