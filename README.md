@@ -6,6 +6,8 @@
 
 Command line interface for [Jora](https://github.com/discoveryjs/jora) (a JSON query language)
 
+![jora-cli-demo](https://user-images.githubusercontent.com/270491/60759717-5d8f6b80-a032-11e9-9ae8-6d30748c2305.gif)
+
 ## Install
 
 ```bash
