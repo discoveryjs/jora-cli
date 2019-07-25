@@ -43,7 +43,64 @@ module.exports = [
         ]
     },
     {
-        json: '{"foo": null, "bar": [1234, false, "ololo"], "quux": {"azaza": {"bar": true}}}',
+        json: '{"f\\"oo\\u1234"\r\n:\t-0.1234, "bar": 0e-3}',
+        tokens: [
+            {
+                type: LEFT_BRACE,
+                value: '{'
+            },
+            {
+                type: STRING,
+                value: '"f\\"oo\\u1234"'
+            },
+            {
+                type: WHITESPACE,
+                value: '\r'
+            },
+            {
+                type: COLON,
+                value: ':'
+            },
+            {
+                type: WHITESPACE,
+                value: '\t'
+            },
+            {
+                type: NUMBER,
+                value: '-0.1234'
+            },
+            {
+                type: COMMA,
+                value: ','
+            },
+            {
+                type: WHITESPACE,
+                value: ' '
+            },
+            {
+                type: STRING,
+                value: '"bar"'
+            },
+            {
+                type: COLON,
+                value: ':'
+            },
+            {
+                type: WHITESPACE,
+                value: ' '
+            },
+            {
+                type: NUMBER,
+                value: '0e-3'
+            },
+            {
+                type: RIGHT_BRACE,
+                value: '}'
+            }
+        ]
+    },
+    {
+        json: '{"foo": null, "bar": [-1234, false, "ololo"], "quux": {"azaza": {"bar": true}}}',
         tokens: [
             {
                 type: LEFT_BRACE,
@@ -91,7 +148,7 @@ module.exports = [
             },
             {
                 type: NUMBER,
-                value: '1234'
+                value: '-1234'
             },
             {
                 type: COMMA,
