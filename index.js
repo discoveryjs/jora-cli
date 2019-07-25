@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const cli = require('clap');
 const jora = require('jora/dist/jora');
-const colorize = require('./utils/colorize');
+const { colorize } = require('./utils/colorize');
 
 function readFromStream(stream, processBuffer) {
     const buffer = [];
@@ -16,6 +16,7 @@ function readFromStream(stream, processBuffer) {
 function processOptions(options, args) {
     const query = options.query || args[0];
     const pretty = options.pretty || false;
+    const color = options.color;
     let inputFile = options.input;
     let outputFile = options.output;
 
@@ -36,6 +37,7 @@ function processOptions(options, args) {
     return {
         query,
         pretty,
+        color,
         inputFile,
         outputFile
     };

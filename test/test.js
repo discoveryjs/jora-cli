@@ -4,6 +4,10 @@ const child = require('child_process');
 const cmd = 'node';
 const pkgJson = path.join(__dirname, '../package.json');
 const pkgJsonData = require(pkgJson);
+const tokenize = require('../utils/tokenize');
+const { markKeys } = require('../utils/colorize');
+const fixtures = require('./fixtures');
+const { STRING_KEY } = require('../utils/constants').TOKENS;
 
 function match(rx) {
     return actual => rx.test(actual);
@@ -119,4 +123,27 @@ describe('errors', function() {
             /Query perform error/
         )
     );
+});
+
+describe('tokenizer', function() {
+    it('Should tokenize', () => {
+        for (const fixture of fixtures) {
+            const tokens = tokenize(fixture.json);
+            for (let i = 0; i < fixture.tokens.length; i++) {
+                assert.equal(tokens[i].type, fixture.tokens[i].type);
+                assert.equal(tokens[i].value, fixture.tokens[i].value);
+            }
+        }
+    });
+});
+
+describe('colorizer', function() {
+    it('Should mark keys', () => {
+        const json = '{"foo": ["bar", "baz"], "quux": 1234}';
+
+        const markedTokens = markKeys(tokenize(json));
+
+        assert.equal(markedTokens[1].type, STRING_KEY);
+        assert.equal(markedTokens[12].type, STRING_KEY);
+    });
 });
