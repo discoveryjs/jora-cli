@@ -184,7 +184,7 @@ module.exports = (input) => {
     const tokens = [];
 
     while (index < input.length) {
-        const matched = (
+        const token = (
             parseWhitespace(input, index) ||
             parseDelim(input, index) ||
             parseKeyword(input, index) ||
@@ -192,16 +192,13 @@ module.exports = (input) => {
             parseNumber(input, index)
         );
 
-        if (!matched) {
+        if (!token) {
             break;
         }
 
-        tokens.push({
-            type: matched.type,
-            value: matched.value
-        });
+        tokens.push(token);
 
-        index += matched.value.length;
+        index += token.value.length;
     }
 
     return tokens;
