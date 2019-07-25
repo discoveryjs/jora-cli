@@ -5,74 +5,64 @@ const {
 } = require('./constants').TOKENS;
 const {
     PUNCTUATOR_TOKENS_MAP,
-    KEYWORD_TOKENS_MAP,
-    STRING_STATES,
-    NUMBER_STATES,
-    ESCAPES
+    KEYWORD_TOKENS_MAP
 } = require('./constants');
 
 // HELPERS
 
-function isDigit1to9(char) {
-    return char >= '1' && char <= '9';
+// digit
+// A code point between U+0030 DIGIT ZERO (0) and U+0039 DIGIT NINE (9).
+function isDigit(code) {
+    return code >= 0x0030 && code <= 0x0039;
 }
 
-function isDigit(char) {
-    return char >= '0' && char <= '9';
-}
-
-function isHex(char) {
+// hex digit
+// A digit, or a code point between U+0041 LATIN CAPITAL LETTER A (A) and U+0046 LATIN CAPITAL LETTER F (F),
+// or a code point between U+0061 LATIN SMALL LETTER A (a) and U+0066 LATIN SMALL LETTER F (f).
+function isHexDigit(code) {
     return (
-        isDigit(char) ||
-        (char >= 'a' && char <= 'f') ||
-        (char >= 'A' && char <= 'F')
+        isDigit(code) || // 0 .. 9
+        (code >= 0x0041 && code <= 0x0046) || // A .. F
+        (code >= 0x0061 && code <= 0x0066)    // a .. f
     );
 }
 
-function isExp(char) {
-    return char === 'e' || char === 'E';
+function isWhiteSpace(code) {
+    return (
+        code === 0x0009 ||  // \t
+        code === 0x000A ||  // \n
+        code === 0x000D ||  // \r
+        code === 0x0020     // space
+    );
 }
 
 // PARSERS
 
-function parseWhitespace(input, index, line, column) {
-    const char = input.charAt(index);
+function parseWhitespace(input, index) {
+    const start = index;
 
-    if (char === '\r') { // CR (Unix)
-        index++;
-        line++;
-        column = 1;
-        if (input.charAt(index) === '\n') { // CRLF (Windows)
-            index++;
+    for (; index < input.length; index++) {
+        if (!isWhiteSpace(input.charCodeAt(index))) {
+            break;
         }
-    } else if (char === '\n') { // LF (MacOS)
-        index++;
-        line++;
-        column = 1;
-    } else if (char === '\t' || char === ' ') {
-        index++;
-        column++;
-    } else {
+    }
+
+    if (start === index) {
         return null;
     }
 
     return {
-        index,
-        line,
-        column,
-        value: char
+        type: WHITESPACE,
+        value: input.substring(start, index)
     };
 }
 
-function parseChar(input, index, line, column) {
+function parseDelim(input, index) {
     const char = input.charAt(index);
 
     if (char in PUNCTUATOR_TOKENS_MAP) {
         return {
             type: PUNCTUATOR_TOKENS_MAP[char],
-            line,
-            column: column + 1,
-            index: index + 1,
             value: char
         };
     }
@@ -80,14 +70,11 @@ function parseChar(input, index, line, column) {
     return null;
 }
 
-function parseKeyword(input, index, line, column) {
+function parseKeyword(input, index) {
     for (const name in KEYWORD_TOKENS_MAP) {
         if (KEYWORD_TOKENS_MAP.hasOwnProperty(name) && input.substr(index, name.length) === name) {
             return {
                 type: KEYWORD_TOKENS_MAP[name],
-                line,
-                column: column + name.length,
-                index: index + name.length,
                 value: name
             };
         }
@@ -96,229 +83,125 @@ function parseKeyword(input, index, line, column) {
     return null;
 }
 
-function parseString(input, index, line, column) {
-    const startIndex = index;
-    let state = STRING_STATES._START_;
+function parseString(input, index) {
+    const start = index;
 
-    while (index < input.length) {
-        const char = input.charAt(index);
+    if (input.charAt(index) !== '"') {
+        return null;
+    }
 
-        switch (state) {
-            case STRING_STATES._START_: {
-                if (char === '"') {
-                    index++;
-                    state = STRING_STATES.START_QUOTE_OR_CHAR;
-                } else {
-                    return null;
-                }
-                break;
-            }
+    for (index++; index < input.length; index++) {
+        switch (input.charAt(index)) {
+            case '"':
+                return {
+                    type: STRING,
+                    value: input.substring(start, index + 1)
+                };
 
-            case STRING_STATES.START_QUOTE_OR_CHAR: {
-                if (char === '\\') {
-                    index++;
-                    state = STRING_STATES.ESCAPE;
-                } else if (char === '"') {
-                    index++;
-                    const value = input.slice(startIndex, index);
+            case '\\':
+                index++;
+                if (input.charCodeAt(index) === 'u') {
+                    // ensure there is at least 5 chars: a code and closing quote
+                    if (input.length - index < 5) {
+                        return null;
+                    }
 
-                    return {
-                        type: STRING,
-                        line,
-                        column: column + index - startIndex,
-                        index,
-                        value
-                    };
-                } else {
-                    index++;
-                }
-                break;
-            }
-
-            case STRING_STATES.ESCAPE: {
-                if (char in ESCAPES) {
-                    index++;
-                    if (char === 'u') {
-                        for (let i = 0; i < 4; i++) {
-                            const curChar = input.charAt(index);
-                            if (curChar && isHex(curChar)) {
-                                index++;
-                            } else {
-                                return null;
-                            }
+                    for (let i = 0; i < 4; i++, index++) {
+                        if (!isHexDigit(input.charCodeAt(index))) {
+                            return null;
                         }
                     }
-                    state = STRING_STATES.START_QUOTE_OR_CHAR;
-                } else {
-                    return null;
                 }
                 break;
-            }
         }
-    }
-}
-
-function parseNumber(input, index, line, column) {
-    const startIndex = index;
-    let passedValueIndex = index;
-    let state = NUMBER_STATES._START_;
-
-    iterator: while (index < input.length) {
-        const char = input.charAt(index);
-
-        switch (state) {
-            case NUMBER_STATES._START_: {
-                if (char === '-') {
-                    state = NUMBER_STATES.MINUS;
-                } else if (char === '0') {
-                    passedValueIndex = index + 1;
-                    state = NUMBER_STATES.ZERO;
-                } else if (isDigit1to9(char)) {
-                    passedValueIndex = index + 1;
-                    state = NUMBER_STATES.DIGIT;
-                } else {
-                    return null;
-                }
-                break;
-            }
-
-            case NUMBER_STATES.MINUS: {
-                if (char === '0') {
-                    passedValueIndex = index + 1;
-                    state = NUMBER_STATES.ZERO;
-                } else if (isDigit1to9(char)) {
-                    passedValueIndex = index + 1;
-                    state = NUMBER_STATES.DIGIT;
-                } else {
-                    return null;
-                }
-                break;
-            }
-
-            case NUMBER_STATES.ZERO: {
-                if (char === '.') {
-                    state = NUMBER_STATES.POINT;
-                } else if (isExp(char)) {
-                    state = NUMBER_STATES.EXP;
-                } else {
-                    break iterator;
-                }
-                break;
-            }
-
-            case NUMBER_STATES.DIGIT: {
-                if (isDigit(char)) {
-                    passedValueIndex = index + 1;
-                } else if (char === '.') {
-                    state = NUMBER_STATES.POINT;
-                } else if (isExp(char)) {
-                    state = NUMBER_STATES.EXP;
-                } else {
-                    break iterator;
-                }
-                break;
-            }
-
-            case NUMBER_STATES.POINT: {
-                if (isDigit(char)) {
-                    passedValueIndex = index + 1;
-                    state = NUMBER_STATES.DIGIT_FRACTION;
-                } else {
-                    break iterator;
-                }
-                break;
-            }
-
-            case NUMBER_STATES.DIGIT_FRACTION: {
-                if (isDigit(char)) {
-                    passedValueIndex = index + 1;
-                } else if (isExp(char)) {
-                    state = NUMBER_STATES.EXP;
-                } else {
-                    break iterator;
-                }
-                break;
-            }
-
-            case NUMBER_STATES.EXP: {
-                if (char === '+' || char === '-') {
-                    state = NUMBER_STATES.EXP_DIGIT_OR_SIGN;
-                } else if (isDigit(char)) {
-                    passedValueIndex = index + 1;
-                    state = NUMBER_STATES.EXP_DIGIT_OR_SIGN;
-                } else {
-                    break iterator;
-                }
-                break;
-            }
-
-            case NUMBER_STATES.EXP_DIGIT_OR_SIGN: {
-                if (isDigit(char)) {
-                    passedValueIndex = index + 1;
-                } else {
-                    break iterator;
-                }
-                break;
-            }
-        }
-
-        index++;
-    }
-
-    if (passedValueIndex > 0) {
-        return {
-            type: NUMBER,
-            line,
-            column: column + passedValueIndex - startIndex,
-            index: passedValueIndex,
-            value: input.slice(startIndex, passedValueIndex)
-        };
     }
 
     return null;
 }
 
+function findDecimalNumberEnd(source, offset) {
+    for (; offset < source.length; offset++) {
+        if (!isDigit(source.charCodeAt(offset))) {
+            break;
+        }
+    }
+
+    return offset;
+}
+
+// Consume a number
+function parseNumber(input, index) {
+    const start = index;
+    let code = input.charCodeAt(index);
+
+    // If the next input code point is U+002B PLUS SIGN (+) or U+002D HYPHEN-MINUS (-),
+    // consume it and append it to repr.
+    if (code === 0x002B || code === 0x002D) {
+        code = input.charCodeAt(index += 1);
+    }
+
+    // While the next input code point is a digit, consume it and append it to repr.
+    if (isDigit(code)) {
+        index = findDecimalNumberEnd(input, index + 1);
+        code = input.charCodeAt(index);
+    } else {
+        return null;
+    }
+
+    // If the next 2 input code points are U+002E FULL STOP (.) followed by a digit, then:
+    if (code === 0x002E && isDigit(input.charCodeAt(index + 1))) {
+        code = input.charCodeAt(index += 2);
+        index = findDecimalNumberEnd(input, index);
+    }
+
+    // If the next 2 or 3 input code points are U+0045 LATIN CAPITAL LETTER E (E)
+    // or U+0065 LATIN SMALL LETTER E (e), ... , followed by a digit, then:
+    if (code === 0x0045 /* E */ || code === 0x0065 /* e */) {
+        var sign = 0;
+        code = input.charCodeAt(index + 1);
+
+        // ... optionally followed by U+002D HYPHEN-MINUS (-) or U+002B PLUS SIGN (+) ...
+        if (code === 0x002D || code === 0x002B) {
+            sign = 1;
+            code = input.charCodeAt(index + 2);
+        }
+
+        // ... followed by a digit
+        if (isDigit(code)) {
+            index = findDecimalNumberEnd(input, index + 1 + sign + 1);
+        }
+    }
+
+    return {
+        type: NUMBER,
+        value: input.slice(start, index)
+    };
+}
+
 module.exports = (input) => {
-    let line = 1;
-    let column = 1;
     let index = 0;
 
     const tokens = [];
 
     while (index < input.length) {
-        const args = [input, index, line, column];
-        const whitespace = parseWhitespace(...args);
-
-        if (whitespace) {
-            index = whitespace.index;
-            line = whitespace.line;
-            column = whitespace.column;
-
-            tokens.push({
-                type: WHITESPACE,
-                value: whitespace.value
-            });
-
-            continue;
-        }
-
         const matched = (
-            parseChar(...args) ||
-            parseKeyword(...args) ||
-            parseString(...args) ||
-            parseNumber(...args)
+            parseWhitespace(input, index) ||
+            parseDelim(input, index) ||
+            parseKeyword(input, index) ||
+            parseString(input, index) ||
+            parseNumber(input, index)
         );
 
-        if (matched) {
-            tokens.push({
-                type: matched.type,
-                value: matched.value
-            });
-
-            index = matched.index;
-            line = matched.line;
-            column = matched.column;
+        if (!matched) {
+            break;
         }
+
+        tokens.push({
+            type: matched.type,
+            value: matched.value
+        });
+
+        index += matched.value.length;
     }
 
     return tokens;
