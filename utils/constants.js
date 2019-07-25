@@ -24,9 +24,9 @@ const TOKEN_COLORS = {
     [TOKENS.COLON]: chalk.gray,
     [TOKENS.COMMA]: chalk.gray,
     [TOKENS.STRING]: chalk.green,
-    [TOKENS.NUMBER]: chalk.blue,
-    [TOKENS.TRUE]: chalk.blue,
-    [TOKENS.FALSE]: chalk.blue,
+    [TOKENS.NUMBER]: chalk.cyan,
+    [TOKENS.TRUE]: chalk.cyan,
+    [TOKENS.FALSE]: chalk.cyan,
     [TOKENS.NULL]: chalk.bold
 };
 
