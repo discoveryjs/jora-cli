@@ -36,7 +36,7 @@ const markKeys = (tokens) => {
     return tokens;
 };
 
-const colorize = (input) => {
+module.exports = (input) => {
     let result = '';
 
     const tokens = tokenize(input);
@@ -53,9 +53,4 @@ const colorize = (input) => {
     }
 
     return result;
-};
-
-module.exports = {
-    markKeys,
-    colorize
 };

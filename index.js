@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const cli = require('clap');
 const jora = require('jora/dist/jora');
-const { colorize } = require('./utils/colorize');
+const colorize = require('./utils/colorize');
 
 function readFromStream(stream, processBuffer) {
     const buffer = [];
@@ -91,7 +91,7 @@ function processStream(options) {
         if (options.outputFile) {
             fs.writeFileSync(options.outputFile, serializedResult, 'utf-8');
         } else {
-            const result = options.noColor ? serializeResult : colorize(serializedResult);
+            const result = options.color ? colorize(serializedResult) : serializedResult;
             console.log(result);
         }
     });
