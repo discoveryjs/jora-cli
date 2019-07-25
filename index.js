@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const cli = require('clap');
 const jora = require('jora/dist/jora');
+const colorize = require('./utils/colorize');
 
 function readFromStream(stream, processBuffer) {
     const buffer = [];
@@ -88,7 +89,8 @@ function processStream(options) {
         if (options.outputFile) {
             fs.writeFileSync(options.outputFile, serializedResult, 'utf-8');
         } else {
-            console.log(serializedResult);
+            const result = options.noColor ? serializeResult : colorize(serializedResult);
+            console.log(result);
         }
     });
 }
@@ -101,6 +103,7 @@ var command = cli.create('jora', '[query]')
     .option('-p, --pretty [indent]', 'Pretty print with optionally specified indentation(4 spaces by default)', value =>
         value === undefined ? 4 : Number(value) || false
     , false)
+    .option('--no-color', 'Suppress color output')
     .action(function(args) {
         var options = processOptions(this.values, args);
 
