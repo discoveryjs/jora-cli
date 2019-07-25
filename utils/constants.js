@@ -25,9 +25,9 @@ const TOKEN_COLORS = {
     [TOKENS.COMMA]: chalk.gray,
     [TOKENS.STRING]: chalk.green,
     [TOKENS.NUMBER]: chalk.blue,
-    [TOKENS.TRUE]: chalk.cyan,
-    [TOKENS.FALSE]: chalk.cyan,
-    [TOKENS.NULL]: chalk.red
+    [TOKENS.TRUE]: chalk.blue,
+    [TOKENS.FALSE]: chalk.blue,
+    [TOKENS.NULL]: chalk.bold
 };
 
 const PUNCTUATOR_TOKENS_MAP = {
