@@ -17,14 +17,13 @@ const TOKENS = {
 };
 
 const TOKEN_COLORS = {
-    [TOKENS.LEFT_BRACE]: chalk.bold.white,
-    [TOKENS.RIGHT_BRACE]: chalk.bold.white,
-    [TOKENS.LEFT_BRACKET]: chalk.bold.white,
-    [TOKENS.RIGHT_BRACKET]: chalk.bold.white,
-    [TOKENS.COLON]: chalk.bold.white,
-    [TOKENS.COMMA]: chalk.bold.white,
+    [TOKENS.LEFT_BRACE]: chalk.gray,
+    [TOKENS.RIGHT_BRACE]: chalk.gray,
+    [TOKENS.LEFT_BRACKET]: chalk.gray,
+    [TOKENS.RIGHT_BRACKET]: chalk.gray,
+    [TOKENS.COLON]: chalk.gray,
+    [TOKENS.COMMA]: chalk.gray,
     [TOKENS.STRING]: chalk.green,
-    [TOKENS.STRING_KEY]: chalk.green.yellow,
     [TOKENS.NUMBER]: chalk.blue,
     [TOKENS.TRUE]: chalk.cyan,
     [TOKENS.FALSE]: chalk.cyan,

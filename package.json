@@ -34,12 +34,12 @@
         "coveralls": "nyc report --reporter=text-lcov | coveralls"
     },
     "dependencies": {
-        "ansi-regex": "^4.1.0",
         "chalk": "^2.4.2",
         "clap": "^1.0.9",
         "jora": "1.0.0-alpha.10"
     },
     "devDependencies": {
+        "ansi-regex": "^4.1.0",
         "coveralls": "^3.0.4",
         "eslint": "^6.0.1",
         "mocha": "^5.2.0",
