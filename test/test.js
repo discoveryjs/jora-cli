@@ -1,6 +1,6 @@
 const assert = require('assert');
 const path = require('path');
-const cp = require('child_process');
+const spawn = require('cross-spawn');
 const pkgJson = path.join(__dirname, '../package.json');
 const pkgJsonData = require(pkgJson);
 const fs = require('fs');
@@ -27,7 +27,7 @@ function runWithForceColors(...args) {
 function runCli(forceColors, cliArgs) {
     let error = '';
     const args = [path.join(__dirname, '../bin/jora')].concat(cliArgs);
-    const child = cp.spawn('node', args, {
+    const child = spawn('node', args, {
         stdio: 'pipe',
         env: forceColors ? envWithForceColors : process.env
     });
