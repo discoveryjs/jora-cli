@@ -16,7 +16,7 @@ function readFromStream(stream, processBuffer) {
 function processOptions(options, args) {
     const query = options.query || args[0];
     const pretty = options.pretty || false;
-    const color = options.color;
+    const color = options.color && colorize.supported;
     let inputFile = options.input;
     let outputFile = options.output;
 
@@ -97,7 +97,7 @@ function processStream(options) {
     });
 }
 
-var command = cli.create('jora', '[query]')
+const command = cli.create('jora', '[query]')
     .version(require('./package.json').version)
     .option('-q, --query <query>', 'Jora query')
     .option('-i, --input <filename>', 'Input file')
@@ -107,7 +107,7 @@ var command = cli.create('jora', '[query]')
     , false)
     .option('--no-color', 'Suppress color output')
     .action(function(args) {
-        var options = processOptions(this.values, args);
+        const options = processOptions(this.values, args);
 
         if (options === null) {
             this.showHelp();

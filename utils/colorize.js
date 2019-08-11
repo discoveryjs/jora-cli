@@ -1,34 +1,28 @@
-const {
-    STRING,
-    STRING_KEY,
-    WHITESPACE,
-    COLON,
-    RIGHT_BRACE,
-    RIGHT_BRACKET
-} = require('./constants').TOKENS;
-const { TOKEN_COLORS } = require('./constants');
 const tokenize = require('./tokenize');
+const {
+    SUPPORTED,
+    TOKEN_COLORS,
+    TOKENS: {
+        STRING,
+        STRING_KEY,
+        WHITESPACE,
+        COLON
+    }
+} = require('./constants');
 
-const markKeys = (tokens) => {
-    for (let i = 0; i < tokens.length; i++) {
+const markObjectKeys = (tokens) => {
+    for (let i = 0; i < tokens.length - 1; i++) {
         let token = tokens[i];
 
         if (token.type === STRING) {
-            for (let j = i + 1; j < tokens.length; j++) {
-                if (tokens[j].type === WHITESPACE) {
-                    continue;
-                }
-                if (tokens[j].type === COLON) {
-                    token.type = STRING_KEY;
-                    break;
-                }
-                if (
-                    tokens[j].type === STRING ||
-                    tokens[j].type === RIGHT_BRACE ||
-                    tokens[j].type === RIGHT_BRACKET
-                ) {
-                    break;
-                }
+            let nextTokenIdx = i + 1;
+
+            if (tokens[nextTokenIdx].type === WHITESPACE) {
+                nextTokenIdx++;
+            }
+
+            if (nextTokenIdx < tokens.length && tokens[nextTokenIdx].type === COLON) {
+                token.type = STRING_KEY;
             }
         }
     }
@@ -39,13 +33,12 @@ const markKeys = (tokens) => {
 module.exports = (input) => {
     let result = '';
 
-    const tokens = tokenize(input);
-    const markedTokens = markKeys(tokens);
+    const tokens = markObjectKeys(tokenize(input));
 
-    for (let i = 0; i < markedTokens.length; i++) {
-        let token = markedTokens[i];
+    for (let i = 0; i < tokens.length; i++) {
+        let token = tokens[i];
 
-        if (TOKEN_COLORS[token.type]) {
+        if (typeof TOKEN_COLORS[token.type] === 'function') {
             result += TOKEN_COLORS[token.type](token.value);
         } else {
             result += token.value;
@@ -54,3 +47,5 @@ module.exports = (input) => {
 
     return result;
 };
+
+module.exports.supported = SUPPORTED;

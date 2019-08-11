@@ -1,23 +1,16 @@
-const {
-    LEFT_BRACE,
-    RIGHT_BRACE,
-    LEFT_BRACKET,
-    RIGHT_BRACKET,
-    STRING,
-    NUMBER,
-    NULL,
-    FALSE,
-    TRUE
-} = require('../utils/constants').TOKENS;
-const { TOKEN_COLORS } = require('../utils/constants');
-const ansiRegex = require('ansi-regex');
+const { TOKENS,  TOKEN_COLORS } = require('../utils/constants');
+
+const tokenNames = {};
+const color = {};
+
+for (let key in TOKENS) {
+    tokenNames[TOKENS[key]] = key;
+}
+
+for (let key in TOKEN_COLORS) {
+    color[tokenNames[key]] = TOKEN_COLORS[key];
+}
 
 module.exports = {
-    STRING: TOKEN_COLORS[STRING](' ').match(ansiRegex()),
-    NUMBER: TOKEN_COLORS[NUMBER](' ').match(ansiRegex()),
-    EMPTY_ARRAY: [...TOKEN_COLORS[LEFT_BRACKET](' ').match(ansiRegex()) || [], ...TOKEN_COLORS[RIGHT_BRACKET](' ').match(ansiRegex()) || []],
-    EMPTY_OBJECT: [...TOKEN_COLORS[LEFT_BRACE](' ').match(ansiRegex()) || [], ...TOKEN_COLORS[RIGHT_BRACE](' ').match(ansiRegex()) || []],
-    NULL: TOKEN_COLORS[NULL](' ').match(ansiRegex()),
-    FALSE: TOKEN_COLORS[FALSE](' ').match(ansiRegex()),
-    TRUE: TOKEN_COLORS[TRUE](' ').match(ansiRegex())
+    color
 };

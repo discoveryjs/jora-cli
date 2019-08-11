@@ -1,56 +1,55 @@
 const assert = require('assert');
 const path = require('path');
-const child = require('child_process');
-const cmd = 'node';
+const cp = require('child_process');
 const pkgJson = path.join(__dirname, '../package.json');
 const pkgJsonData = require(pkgJson);
 const fs = require('fs');
-const colorize = require('../utils/colorize');
-const fixture = require('../test/fixture.json');
-const ansiRegex = require('ansi-regex');
-const {
-    STRING,
-    NUMBER,
-    EMPTY_ARRAY,
-    EMPTY_OBJECT,
-    NULL,
-    FALSE,
-    TRUE
-} = require('./helpers');
+const fixture = fs.readFileSync(path.join(__dirname, 'color-fixture.json'), 'utf8');
+const fixtureData = JSON.parse(fixture);
+const fixtureExpected = fs.readFileSync(path.join(__dirname, 'color-fixture.expected'), 'utf8').trim();
+const { color } = require('./helpers');
+const envWithForceColors = Object.assign({}, process.env, {
+    FORCE_COLOR: true
+});
 
 function match(rx) {
     return actual => rx.test(actual);
 }
 
-function matchANSI(fixture) {
-    return data => assert.deepEqual(data.match(ansiRegex()), fixture);
+function run(...args) {
+    return runCli(false, args);
 }
 
-function run() {
-    var args = [path.join(__dirname, '../bin/jora')].concat(Array.prototype.slice.call(arguments));
-    var proc = child.spawn(cmd, args, { stdio: 'pipe' });
-    var error = '';
-    var wrapper = new Promise(function(resolve, reject) {
-        proc.once('exit', code =>
+function runWithForceColors(...args) {
+    return runCli(true, args);
+}
+
+function runCli(forceColors, cliArgs) {
+    let error = '';
+    const args = [path.join(__dirname, '../bin/jora')].concat(cliArgs);
+    const child = cp.spawn('node', args, {
+        stdio: 'pipe',
+        env: forceColors ? envWithForceColors : process.env
+    });
+    const wrapper = new Promise(function(resolve, reject) {
+        child.once('exit', code =>
             code ? reject(new Error(error)) : resolve()
         );
     });
 
     wrapper.input = function(data) {
-        proc.stdin.write(data);
-        proc.stdin.end();
+        child.stdin.write(data);
+        child.stdin.end();
         return wrapper;
     };
 
     wrapper.output = function(expected) {
-        var buffer = [];
+        const buffer = [];
 
-        proc.stdout
-            .on('data', function(chunk) {
-                buffer.push(chunk);
-            })
+        child.stdout
+            .on('data', chunk => buffer.push(chunk))
             .on('end', function() {
-                var data = buffer.join('').trim();
+                const data = buffer.join('').trim();
 
                 if (typeof expected === 'function') {
                     expected(data);
@@ -62,7 +61,7 @@ function run() {
         return wrapper;
     };
 
-    proc.stderr.once('data', function(data) {
+    child.stderr.once('data', function(data) {
         error += data;
     });
 
@@ -91,7 +90,7 @@ it('should output version', () =>
 );
 
 it('should read content from stdin if no file specified', () =>
-    run('version', '--no-color')
+    run('version')
         .input(JSON.stringify(pkgJsonData))
         .output(JSON.stringify(pkgJsonData.version))
 );
@@ -138,45 +137,30 @@ describe('errors', function() {
     );
 });
 
-describe.skip('colorizer', function() {
-    it('Should colorize string', () =>
-        run('string')
-            .input(JSON.stringify(fixture))
-            .output(matchANSI(STRING))
-    );
-    it('Should colorize number', () =>
-        run('number')
-            .input(JSON.stringify(fixture))
-            .output(matchANSI(NUMBER))
-    );
-    it('Should colorize empty array', () =>
-        run('emptyArray')
-            .input(JSON.stringify(fixture))
-            .output(matchANSI(EMPTY_ARRAY))
-    );
-    it('Should colorize empty object', () =>
-        run('emptyArray')
-            .input(JSON.stringify(fixture))
-            .output(matchANSI(EMPTY_OBJECT))
-    );
-    it('Should colorize empty object', () =>
-        run('null')
-            .input(JSON.stringify(fixture))
-            .output(matchANSI(NULL))
-    );
-    it('Should colorize empty object', () =>
-        run('false')
-            .input(JSON.stringify(fixture))
-            .output(matchANSI(FALSE))
-    );
-    it('Should colorize empty object', () =>
-        run('true')
-            .input(JSON.stringify(fixture))
-            .output(matchANSI(TRUE))
-    );
-    it('Should colorize raw complex JSON', () =>
-        colorize(
-            fs.readFileSync(path.resolve(__dirname, './fixture.json')).toString()
-        ).match(ansiRegex())
+describe('colorizer', function() {
+    const tests = {
+        string: color.STRING,
+        number: color.NUMBER,
+        emptyArray: () => color.LEFT_BRACKET('[') + color.RIGHT_BRACKET(']'),
+        emptyObject: () => color.LEFT_BRACE('{') + color.RIGHT_BRACE('}'),
+        null: color.NULL,
+        false: color.FALSE,
+        true: color.TRUE
+    };
+
+    Object.keys(tests).forEach(key => {
+        it(`Should colorize "${key}"`, () =>
+            runWithForceColors(key)
+                .input(fixture)
+                .output(tests[key](JSON.stringify(fixtureData[key])))
+        );
+    });
+
+    // update snapshot
+    // FORCE_COLOR=true node bin/jora -p <test/fixture.json >test/fixture.expected.json
+    it('Should colorize complex JSON', () =>
+        runWithForceColors('-p')
+            .input(fixture)
+            .output(fixtureExpected)
     );
 });

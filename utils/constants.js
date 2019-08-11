@@ -1,4 +1,5 @@
 const chalk = require('chalk');
+const { stdout: { hasBasic: SUPPORTED } } = require('supports-color');
 
 const TOKENS = {
     LEFT_BRACE: 0,      // {
@@ -46,6 +47,7 @@ const KEYWORD_TOKENS_MAP = {
 };
 
 module.exports = {
+    SUPPORTED,
     TOKENS,
     TOKEN_COLORS,
     PUNCTUATOR_TOKENS_MAP,
