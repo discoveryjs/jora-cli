@@ -1,3 +1,7 @@
+## next
+
+- Added colored output when appropriate. Use `--no-color` option to suppress color output (#2)
+
 ## 1.0.1 (July 4, 2019)
 
 - Used dist version of `jora` to reduce startup time (up to 10x)
