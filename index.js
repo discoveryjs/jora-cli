@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const cli = require('clap');
 const jora = require('jora/dist/jora');
+const colorize = require('./utils/colorize');
 
 function readFromStream(stream, processBuffer) {
     const buffer = [];
@@ -15,6 +16,7 @@ function readFromStream(stream, processBuffer) {
 function processOptions(options, args) {
     const query = options.query || args[0];
     const pretty = options.pretty || false;
+    const color = options.color && colorize.supported;
     let inputFile = options.input;
     let outputFile = options.output;
 
@@ -35,6 +37,7 @@ function processOptions(options, args) {
     return {
         query,
         pretty,
+        color,
         inputFile,
         outputFile
     };
@@ -88,12 +91,13 @@ function processStream(options) {
         if (options.outputFile) {
             fs.writeFileSync(options.outputFile, serializedResult, 'utf-8');
         } else {
-            console.log(serializedResult);
+            const result = options.color ? colorize(serializedResult) : serializedResult;
+            console.log(result);
         }
     });
 }
 
-var command = cli.create('jora', '[query]')
+const command = cli.create('jora', '[query]')
     .version(require('./package.json').version)
     .option('-q, --query <query>', 'Jora query')
     .option('-i, --input <filename>', 'Input file')
@@ -101,8 +105,9 @@ var command = cli.create('jora', '[query]')
     .option('-p, --pretty [indent]', 'Pretty print with optionally specified indentation (4 spaces by default)', value =>
         value === undefined ? 4 : Number(value) || false
     , false)
+    .option('--no-color', 'Suppress color output')
     .action(function(args) {
-        var options = processOptions(this.values, args);
+        const options = processOptions(this.values, args);
 
         if (options === null) {
             this.showHelp();

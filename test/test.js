@@ -1,39 +1,55 @@
 const assert = require('assert');
 const path = require('path');
-const child = require('child_process');
-const cmd = 'node';
+const { spawn } = require('child_process');
 const pkgJson = path.join(__dirname, '../package.json');
 const pkgJsonData = require(pkgJson);
+const fs = require('fs');
+const fixture = fs.readFileSync(path.join(__dirname, 'color-fixture.json'), 'utf8');
+const fixtureData = JSON.parse(fixture);
+const fixtureExpected = fs.readFileSync(path.join(__dirname, 'color-fixture.expected'), 'utf8').trim();
+const { color } = require('./helpers');
+const envWithForceColors = Object.assign({}, process.env, {
+    FORCE_COLOR: true
+});
 
 function match(rx) {
     return actual => rx.test(actual);
 }
 
-function run() {
-    var args = [path.join(__dirname, '../bin/jora')].concat(Array.prototype.slice.call(arguments));
-    var proc = child.spawn(cmd, args, { stdio: 'pipe' });
-    var error = '';
-    var wrapper = new Promise(function(resolve, reject) {
-        proc.once('exit', code =>
+function run(...args) {
+    return runCli(false, args);
+}
+
+function runWithForceColors(...args) {
+    return runCli(true, args);
+}
+
+function runCli(forceColors, cliArgs) {
+    let error = '';
+    const args = [path.join(__dirname, '../bin/jora')].concat(cliArgs);
+    const child = spawn('node', args, {
+        stdio: 'pipe',
+        env: forceColors ? envWithForceColors : process.env
+    });
+    const wrapper = new Promise(function(resolve, reject) {
+        child.once('exit', code =>
             code ? reject(new Error(error)) : resolve()
         );
     });
 
     wrapper.input = function(data) {
-        proc.stdin.write(data);
-        proc.stdin.end();
+        child.stdin.write(data);
+        child.stdin.end();
         return wrapper;
     };
 
     wrapper.output = function(expected) {
-        var buffer = [];
+        const buffer = [];
 
-        proc.stdout
-            .on('data', function(chunk) {
-                buffer.push(chunk);
-            })
+        child.stdout
+            .on('data', chunk => buffer.push(chunk))
             .on('end', function() {
-                var data = buffer.join('').trim();
+                const data = buffer.join('').trim();
 
                 if (typeof expected === 'function') {
                     expected(data);
@@ -45,7 +61,7 @@ function run() {
         return wrapper;
     };
 
-    proc.stderr.once('data', function(data) {
+    child.stderr.once('data', function(data) {
         error += data;
     });
 
@@ -99,24 +115,53 @@ describe('pretty print', function() {
 });
 
 describe('errors', function() {
-    it('JSON parse error', () =>
+    it('JSON parse', () =>
         assert.rejects(
             () => run('foo').input('broken json'),
             /JSON parse error/
         )
     );
 
-    it('Query prepare error', () =>
+    it('Query prepare', () =>
         assert.rejects(
             () => run('broken query').input('{}'),
             /Jora query prepare error/
         )
     );
 
-    it('Query perform error', () =>
+    it('Query perform', () =>
         assert.rejects(
             () => run('foo()').input('{}'),
             /Query perform error/
         )
+    );
+});
+
+// FIXME: skip colored output tests for Windows since no way currently to pass custom env variable (FORCE_COLOR) to a child process
+(process.platform !== 'win32' ? describe : describe.skip)('colored output', function() {
+    const tests = {
+        string: color.STRING,
+        number: color.NUMBER,
+        emptyArray: () => color.LEFT_BRACKET('[') + color.RIGHT_BRACKET(']'),
+        emptyObject: () => color.LEFT_BRACE('{') + color.RIGHT_BRACE('}'),
+        null: color.NULL,
+        false: color.FALSE,
+        true: color.TRUE
+    };
+
+    Object.keys(tests).forEach(key => {
+        it(key, () =>
+            runWithForceColors(key)
+                .input(fixture)
+                .output(tests[key](JSON.stringify(fixtureData[key])))
+        );
+    });
+
+    // update snapshot
+    // FORCE_COLOR=true node bin/jora -p <test/fixture.json >test/fixture.expected.json
+    it('Complex JSON', () =>
+        runWithForceColors('-p')
+            .input(fixture)
+            .output(fixtureExpected)
     );
 });
