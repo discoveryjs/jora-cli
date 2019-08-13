@@ -1,6 +1,6 @@
 const assert = require('assert');
 const path = require('path');
-const spawn = require('cross-spawn');
+const { spawn } = require('child_process');
 const pkgJson = path.join(__dirname, '../package.json');
 const pkgJsonData = require(pkgJson);
 const fs = require('fs');
@@ -115,21 +115,21 @@ describe('pretty print', function() {
 });
 
 describe('errors', function() {
-    it('JSON parse error', () =>
+    it('JSON parse', () =>
         assert.rejects(
             () => run('foo').input('broken json'),
             /JSON parse error/
         )
     );
 
-    it('Query prepare error', () =>
+    it('Query prepare', () =>
         assert.rejects(
             () => run('broken query').input('{}'),
             /Jora query prepare error/
         )
     );
 
-    it('Query perform error', () =>
+    it('Query perform', () =>
         assert.rejects(
             () => run('foo()').input('{}'),
             /Query perform error/
@@ -137,7 +137,8 @@ describe('errors', function() {
     );
 });
 
-describe('colorizer', function() {
+// FIXME: skip colored output tests for Windows since no way currently to pass custom env variable (FORCE_COLOR) to a child process
+(process.platform !== 'win32' ? describe : describe.skip)('colored output', function() {
     const tests = {
         string: color.STRING,
         number: color.NUMBER,
@@ -149,7 +150,7 @@ describe('colorizer', function() {
     };
 
     Object.keys(tests).forEach(key => {
-        it(`Should colorize "${key}"`, () =>
+        it(key, () =>
             runWithForceColors(key)
                 .input(fixture)
                 .output(tests[key](JSON.stringify(fixtureData[key])))
@@ -158,7 +159,7 @@ describe('colorizer', function() {
 
     // update snapshot
     // FORCE_COLOR=true node bin/jora -p <test/fixture.json >test/fixture.expected.json
-    it('Should colorize complex JSON', () =>
+    it('Complex JSON', () =>
         runWithForceColors('-p')
             .input(fixture)
             .output(fixtureExpected)
