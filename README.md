@@ -26,6 +26,7 @@ Options:
 
   -h, --help               Output usage information
   -i, --input <filename>   Input file
+      --no-color           Suppress color output
   -o, --output <filename>  Output file (outputs to stdout if not set)
   -p, --pretty [indent]    Pretty print with optionally specified indentation (4 spaces by default)
   -q, --query <query>      Jora query

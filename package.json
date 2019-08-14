@@ -3,9 +3,6 @@
     "version": "1.0.1",
     "description": "Command line interface for Jora",
     "keywords": [],
-    "sdf": false,
-    "nu": 123,
-    "asd": null,
     "homepage": "https://github.com/discoveryjs/jora-cli",
     "maintainers": [
         {
