@@ -43,6 +43,10 @@ function processOptions(options, args) {
     };
 }
 
+function convertUndefinedToNull(value) {
+    return value === undefined ? null : value;
+}
+
 function safeOperation(name, fn) {
     try {
         return fn();
@@ -86,13 +90,12 @@ function processStream(options) {
     readFromStream(inputStream, function(source) {
         const data = prepareData(source);
         const result = performQuery(query, data, undefined);
-        const serializedResult = serializeResult(result, options);
+        const serializedResult = serializeResult(convertUndefinedToNull(result), options);
 
         if (options.outputFile) {
             fs.writeFileSync(options.outputFile, serializedResult, 'utf-8');
         } else {
-            const result = options.color ? colorize(serializedResult) : serializedResult;
-            console.log(result);
+            console.log(options.color ? colorize(serializedResult) : serializedResult);
         }
     });
 }
@@ -102,7 +105,7 @@ const command = cli.create('jora', '[query]')
     .option('-q, --query <query>', 'Jora query')
     .option('-i, --input <filename>', 'Input file')
     .option('-o, --output <filename>', 'Output file (outputs to stdout if not set)')
-    .option('-p, --pretty [indent]', 'Pretty print with optionally specified indentation (4 spaces by default)', value =>
+    .option('-p, --pretty [indent]', 'Pretty print with optionally specified indentation(4 spaces by default)', value =>
         value === undefined ? 4 : Number(value) || false
     , false)
     .option('--no-color', 'Suppress color output')

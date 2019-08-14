@@ -3,6 +3,9 @@
     "number"[90m:[39m [36m1234[39m[90m,[39m
     "emptyArray"[90m:[39m [90m[[39m[90m][39m[90m,[39m
     "emptyObject"[90m:[39m [90m{[39m[90m}[39m[90m,[39m
+    "singlePropObject"[90m:[39m [90m{[39m
+        "foo"[90m:[39m [32m"test"[39m
+    [90m}[39m[90m,[39m
     "null"[90m:[39m [1mnull[22m[90m,[39m
     "false"[90m:[39m [36mfalse[39m[90m,[39m
     "true"[90m:[39m [36mtrue[39m[90m,[39m

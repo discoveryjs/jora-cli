@@ -11,6 +11,12 @@ const { color } = require('./helpers');
 const envWithForceColors = Object.assign({}, process.env, {
     FORCE_COLOR: true
 });
+const nonJsonValues = {
+    undefined: 'undefined',
+    NaN: '0/0',
+    Infinity: '1/0',
+    NegativeInfinity: '1/-0'
+};
 
 function match(rx) {
     return actual => rx.test(actual);
@@ -32,8 +38,8 @@ function runCli(forceColors, cliArgs) {
         env: forceColors ? envWithForceColors : process.env
     });
     const wrapper = new Promise(function(resolve, reject) {
-        child.once('exit', code =>
-            code ? reject(new Error(error)) : resolve()
+        child.once('exit', () =>
+            error ? reject(new Error(error)) : resolve()
         );
     });
 
@@ -61,7 +67,7 @@ function runCli(forceColors, cliArgs) {
         return wrapper;
     };
 
-    child.stderr.once('data', function(data) {
+    child.stderr.on('data', function(data) {
         error += data;
     });
 
@@ -83,6 +89,16 @@ it('should output data itself when no query', () =>
         .input('42')
         .output('42')
 );
+
+describe('non-JSON primitives', () => {
+    Object.keys(nonJsonValues).forEach(key =>
+        it(key, () =>
+            run('-q', nonJsonValues[key])
+                .input('{}')
+                .output('null')
+        )
+    );
+});
 
 it('should output version', () =>
     run('-v')
@@ -144,6 +160,7 @@ describe('errors', function() {
         number: color.NUMBER,
         emptyArray: () => color.LEFT_BRACKET('[') + color.RIGHT_BRACKET(']'),
         emptyObject: () => color.LEFT_BRACE('{') + color.RIGHT_BRACE('}'),
+        singlePropObject: () => color.LEFT_BRACE('{') + color.STRING_KEY('"foo"') + color.COLON(':') + color.STRING('"test"') + color.RIGHT_BRACE('}'),
         null: color.NULL,
         false: color.FALSE,
         true: color.TRUE
@@ -157,11 +174,28 @@ describe('errors', function() {
         );
     });
 
-    // update snapshot
-    // FORCE_COLOR=true node bin/jora -p <test/fixture.json >test/fixture.expected.json
+    // non JSON values
+    describe('non-JSON primitives', () =>
+        Object.keys(nonJsonValues).forEach(key =>
+            it(key, () =>
+                runWithForceColors('-q', nonJsonValues[key])
+                    .input('{}')
+                    .output(color.NULL('null'))
+            )
+        )
+    );
+
+    // How to update snapshot:
+    // FORCE_COLOR=true node bin/jora -p <test/color-fixture.json >test/color-fixture.expected
     it('Complex JSON', () =>
         runWithForceColors('-p')
             .input(fixture)
             .output(fixtureExpected)
+    );
+
+    it('--no-color should suppress output coloring', () =>
+        runWithForceColors('--no-color')
+            .input(fixture)
+            .output(JSON.stringify(fixtureData))
     );
 });

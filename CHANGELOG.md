@@ -1,6 +1,7 @@
 ## next
 
 - Added colored output when appropriate. Use `--no-color` option to suppress color output (#2)
+- Fixed output `undefined` value
 
 ## 1.0.1 (July 4, 2019)
 

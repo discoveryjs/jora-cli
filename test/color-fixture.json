@@ -3,6 +3,7 @@
     "number": 1234,
     "emptyArray": [],
     "emptyObject": {},
+    "singlePropObject": { "foo": "test" },
     "null": null,
     "false": false,
     "true": true,
