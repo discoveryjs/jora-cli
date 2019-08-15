@@ -1,9 +1,9 @@
 const tokenize = require('./tokenize');
 const {
     SUPPORTED,
-    TOKEN_TYPE_COUNT,
     STYLE_TRANSITION,
     TOKENS: {
+        DEFAULT,
         STRING,
         STRING_KEY,
         WHITESPACE,
@@ -33,12 +33,12 @@ const markObjectKeys = (tokens) => {
 
 module.exports = (input) => {
     const tokens = markObjectKeys(tokenize(input));
-    let prevType = 0;
+    let prevType = DEFAULT;
     let result = '';
 
     for (let i = 0; i < tokens.length; i++) {
         const token = tokens[i];
-        const transitionCodes = STYLE_TRANSITION[prevType * TOKEN_TYPE_COUNT + token.type];
+        const transitionCodes = STYLE_TRANSITION[prevType][token.type];
 
         if (transitionCodes) {
             result += transitionCodes;
@@ -48,7 +48,7 @@ module.exports = (input) => {
         prevType = token.type;
     }
 
-    return result + STYLE_TRANSITION[prevType * TOKEN_TYPE_COUNT]; // -> reset styles
+    return result + STYLE_TRANSITION[prevType][DEFAULT]; // transition to DEFAULT -> reset styles
 };
 
 module.exports.supported = SUPPORTED;

@@ -1,7 +1,6 @@
 const chalk = require('chalk');
 const { stdout: { hasBasic: SUPPORTED } } = require('supports-color');
 
-const TOKEN_TYPE_COUNT = 14;
 const TOKENS = {
     DEFAULT: 0,         // special for start/end
     LEFT_BRACE: 1,      // {
@@ -34,7 +33,6 @@ const KEYWORD_TOKENS_MAP = {
     'null': TOKENS.NULL
 };
 
-const STYLE_TRANSITION = new Array(TOKEN_TYPE_COUNT * TOKEN_TYPE_COUNT);
 const STYLE = {
     [TOKENS.LEFT_BRACE]: chalk.gray,
     [TOKENS.RIGHT_BRACE]: chalk.gray,
@@ -49,9 +47,14 @@ const STYLE = {
     [TOKENS.NULL]: chalk.bold
 };
 
+const STYLE_TRANSITION = [];
+const TOKEN_TYPE_COUNT = Object.keys(TOKENS).length;
+
 for (let i = 0; i < TOKEN_TYPE_COUNT; i++) {
     const fromStyles = (STYLE[i] || {})._styles || [];
     const fromStyleMap = fromStyles.reduce((map, style) => map.set(style.close, style.open), new Map());
+
+    STYLE_TRANSITION[i] = [];
 
     for (let j = 0; j < TOKEN_TYPE_COUNT; j++) {
         const toStyles = ((j && STYLE[j]) || {})._styles || []; // j && STYLE[j] to reset styles on end
@@ -76,14 +79,13 @@ for (let i = 0; i < TOKEN_TYPE_COUNT; i++) {
             }
         });
 
-        STYLE_TRANSITION[i * TOKEN_TYPE_COUNT + j] = styleTransitionCodes;
+        STYLE_TRANSITION[i].push(styleTransitionCodes);
     }
 }
 
 module.exports = {
     SUPPORTED,
     TOKENS,
-    TOKEN_TYPE_COUNT,
     STYLE,
     STYLE_TRANSITION,
     PUNCTUATOR_TOKENS_MAP,

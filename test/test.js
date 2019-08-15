@@ -1,13 +1,13 @@
 const assert = require('assert');
 const path = require('path');
+const fs = require('fs');
 const { spawn } = require('child_process');
+const { style } = require('./helpers');
 const pkgJson = path.join(__dirname, '../package.json');
 const pkgJsonData = require(pkgJson);
-const fs = require('fs');
 const fixture = fs.readFileSync(path.join(__dirname, 'color-fixture.json'), 'utf8');
 const fixtureData = JSON.parse(fixture);
 const fixtureExpected = fs.readFileSync(path.join(__dirname, 'color-fixture.expected'), 'utf8').trim();
-const { style } = require('./helpers');
 const envWithForceColors = Object.assign({}, process.env, {
     FORCE_COLOR: true
 });
@@ -156,23 +156,21 @@ describe('errors', function() {
 // FIXME: skip colored output tests for Windows since no way currently to pass custom env variable (FORCE_COLOR) to a child process
 (process.platform !== 'win32' ? describe : describe.skip)('colored output', function() {
     const tests = {
-        string: style.STRING,
-        number: style.NUMBER,
-        emptyArray: () => style.LEFT_BRACKET('[]'),
-        emptyObject: () => style.LEFT_BRACE('{}'),
-        singlePropObject: () =>
-            // style.LEFT_BRACE('{') + style.STRING_KEY('"foo"') + style.COLON(':') + style.STRING('"test"') + style.RIGHT_BRACE('}'),
-            '\u001b[90m{\u001b[39m"foo"\u001b[90m:\u001b[32m"test"\u001b[90m}\u001b[39m',
-        null: style.NULL,
-        false: style.FALSE,
-        true: style.TRUE
+        string: style('STRING', JSON.stringify(fixtureData.string)),
+        number: style('NUMBER', fixtureData.number),
+        emptyArray: style('LEFT_BRACKET', '[', 'RIGHT_BRACKET', ']'),
+        emptyObject: style('LEFT_BRACE', '{', 'RIGHT_BRACE', '}'),
+        singlePropObject: style('LEFT_BRACE', '{', 'STRING_KEY', '"foo"', 'COLON', ':', 'STRING', '"test"', 'RIGHT_BRACE', '}'),
+        null: style('NULL', 'null'),
+        false: style('FALSE', 'false'),
+        true: style('TRUE', 'true')
     };
 
     Object.keys(tests).forEach(key => {
         it(key, () =>
             runWithForceColors(key)
                 .input(fixture)
-                .output(tests[key](JSON.stringify(fixtureData[key])))
+                .output(tests[key])
         );
     });
 
@@ -182,7 +180,7 @@ describe('errors', function() {
             it(key, () =>
                 runWithForceColors('-q', nonJsonValues[key])
                     .input('{}')
-                    .output(style.NULL('null'))
+                    .output(style('NULL', 'null'))
             )
         )
     );
