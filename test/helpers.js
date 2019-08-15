@@ -1,10 +1,10 @@
-const { TOKENS,  TOKEN_COLORS } = require('../utils/constants');
-const color = {};
+const { TOKENS, STYLE } = require('../utils/constants');
+const style = {};
 
 for (let key in TOKENS) {
-    color[key] = TOKEN_COLORS[TOKENS[key]] || (s => s);
+    style[key] = STYLE[TOKENS[key]] || (s => s);
 }
 
 module.exports = {
-    color
+    style
 };

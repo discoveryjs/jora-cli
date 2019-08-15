@@ -7,7 +7,7 @@ const fs = require('fs');
 const fixture = fs.readFileSync(path.join(__dirname, 'color-fixture.json'), 'utf8');
 const fixtureData = JSON.parse(fixture);
 const fixtureExpected = fs.readFileSync(path.join(__dirname, 'color-fixture.expected'), 'utf8').trim();
-const { color } = require('./helpers');
+const { style } = require('./helpers');
 const envWithForceColors = Object.assign({}, process.env, {
     FORCE_COLOR: true
 });
@@ -156,14 +156,16 @@ describe('errors', function() {
 // FIXME: skip colored output tests for Windows since no way currently to pass custom env variable (FORCE_COLOR) to a child process
 (process.platform !== 'win32' ? describe : describe.skip)('colored output', function() {
     const tests = {
-        string: color.STRING,
-        number: color.NUMBER,
-        emptyArray: () => color.LEFT_BRACKET('[') + color.RIGHT_BRACKET(']'),
-        emptyObject: () => color.LEFT_BRACE('{') + color.RIGHT_BRACE('}'),
-        singlePropObject: () => color.LEFT_BRACE('{') + color.STRING_KEY('"foo"') + color.COLON(':') + color.STRING('"test"') + color.RIGHT_BRACE('}'),
-        null: color.NULL,
-        false: color.FALSE,
-        true: color.TRUE
+        string: style.STRING,
+        number: style.NUMBER,
+        emptyArray: () => style.LEFT_BRACKET('[]'),
+        emptyObject: () => style.LEFT_BRACE('{}'),
+        singlePropObject: () =>
+            // style.LEFT_BRACE('{') + style.STRING_KEY('"foo"') + style.COLON(':') + style.STRING('"test"') + style.RIGHT_BRACE('}'),
+            '\u001b[90m{\u001b[39m"foo"\u001b[90m:\u001b[32m"test"\u001b[90m}\u001b[39m',
+        null: style.NULL,
+        false: style.FALSE,
+        true: style.TRUE
     };
 
     Object.keys(tests).forEach(key => {
@@ -180,7 +182,7 @@ describe('errors', function() {
             it(key, () =>
                 runWithForceColors('-q', nonJsonValues[key])
                     .input('{}')
-                    .output(color.NULL('null'))
+                    .output(style.NULL('null'))
             )
         )
     );

@@ -1,7 +1,8 @@
 const tokenize = require('./tokenize');
 const {
     SUPPORTED,
-    TOKEN_COLORS,
+    TOKEN_TYPE_COUNT,
+    STYLE_TRANSITION,
     TOKENS: {
         STRING,
         STRING_KEY,
@@ -31,21 +32,23 @@ const markObjectKeys = (tokens) => {
 };
 
 module.exports = (input) => {
+    const tokens = markObjectKeys(tokenize(input));
+    let prevType = 0;
     let result = '';
 
-    const tokens = markObjectKeys(tokenize(input));
-
     for (let i = 0; i < tokens.length; i++) {
-        let token = tokens[i];
+        const token = tokens[i];
+        const transitionCodes = STYLE_TRANSITION[prevType * TOKEN_TYPE_COUNT + token.type];
 
-        if (typeof TOKEN_COLORS[token.type] === 'function') {
-            result += TOKEN_COLORS[token.type](token.value);
-        } else {
-            result += token.value;
+        if (transitionCodes) {
+            result += transitionCodes;
         }
+
+        result += token.value;
+        prevType = token.type;
     }
 
-    return result;
+    return result + STYLE_TRANSITION[prevType * TOKEN_TYPE_COUNT]; // -> reset styles
 };
 
 module.exports.supported = SUPPORTED;
