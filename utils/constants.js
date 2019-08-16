@@ -48,17 +48,23 @@ const STYLE = {
 };
 
 const STYLE_TRANSITION = [];
-const TOKEN_TYPE_COUNT = Object.keys(TOKENS).length;
+const tokenTypes = Object.keys(TOKENS);
+const styleMap = tokenTypes.reduce(
+    (styleMap, key) =>
+        styleMap.set(TOKENS[key],
+            ((STYLE.hasOwnProperty(TOKENS[key]) ? STYLE[TOKENS[key]] : {})._styles || [])
+                .reduce((map, style) => map.set(style.close, style.open), new Map())
+        ),
+    new Map()
+);
 
-for (let i = 0; i < TOKEN_TYPE_COUNT; i++) {
-    const fromStyles = (STYLE[i] || {})._styles || [];
-    const fromStyleMap = fromStyles.reduce((map, style) => map.set(style.close, style.open), new Map());
+for (let i = 0; i < tokenTypes.length; i++) {
+    const fromStyleMap = styleMap.get(i);
 
     STYLE_TRANSITION[i] = [];
 
-    for (let j = 0; j < TOKEN_TYPE_COUNT; j++) {
-        const toStyles = ((j && STYLE[j]) || {})._styles || []; // j && STYLE[j] to reset styles on end
-        const toStyleMap = toStyles.reduce((map, style) => map.set(style.close, style.open), new Map());
+    for (let j = 0; j < tokenTypes.length; j++) {
+        let toStyleMap = j ? styleMap.get(j) : new Map(); // for j reset styles on end
         let styleTransitionCodes = '';
 
         fromStyleMap.forEach((fromValue, key) => {
