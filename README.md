@@ -6,7 +6,7 @@
 
 Command line interface for [Jora](https://github.com/discoveryjs/jora) (a JSON query language)
 
-![jora-cli-demo](https://user-images.githubusercontent.com/270491/60759717-5d8f6b80-a032-11e9-9ae8-6d30748c2305.gif)
+![jora-cli-demo](https://user-images.githubusercontent.com/270491/63531735-d4fd5980-c511-11e9-95ff-ed58dc94738a.gif)
 
 ## Install
 
@@ -51,6 +51,15 @@ npm ls --json | jora "
         .[versions.size() > 1]
 ";
 ```
+
+## Caveats
+
+`jora-cli` takes a valid JSON and produce a valid JSON as a result. However, `jora` language could produce some values that incompatable with JSON, such values are transforming:
+
+- `NaN`, `Infinity` and `-Infinity` are converting to `null`, that's a behaviour of `JSON.stringify()`
+- `undefined`
+  - is convering to `null` when a result of query (top level) or an element of an array
+  - object entries with `undefined` as a value are eliminating
 
 ## License
 
