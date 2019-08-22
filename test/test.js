@@ -8,6 +8,7 @@ const pkgJsonData = require(pkgJson);
 const fixture = fs.readFileSync(path.join(__dirname, 'color-fixture.json'), 'utf8');
 const fixtureData = JSON.parse(fixture);
 const fixtureExpected = fs.readFileSync(path.join(__dirname, 'color-fixture.expected'), 'utf8').trim();
+const fixtureExpectedCompact = fs.readFileSync(path.join(__dirname, 'color-fixture.compact.expected'), 'utf8').trim();
 const envWithForceColors = Object.assign({}, process.env, {
     FORCE_COLOR: true
 });
@@ -160,7 +161,7 @@ describe('errors', function() {
         number: style('NUMBER', fixtureData.number),
         emptyArray: style('LEFT_BRACKET', '[', 'RIGHT_BRACKET', ']'),
         emptyObject: style('LEFT_BRACE', '{', 'RIGHT_BRACE', '}'),
-        singlePropObject: style('LEFT_BRACE', '{', 'STRING_KEY', '"foo"', 'COLON', ':', 'STRING', '"test"', 'RIGHT_BRACE', '}'),
+        singlePropObject: style('LEFT_BRACE', '{', 'STRING_KEY', '"', 'STRING_KEY_CONTENT', 'foo', 'STRING_KEY', '"', 'COLON', ':', 'STRING', '"test"', 'RIGHT_BRACE', '}'),
         null: style('NULL', 'null'),
         false: style('FALSE', 'false'),
         true: style('TRUE', 'true')
@@ -186,12 +187,21 @@ describe('errors', function() {
     );
 
     // How to update snapshot:
-    // FORCE_COLOR=true node bin/jora -p <test/color-fixture.json >test/color-fixture.expected
-    it('Complex JSON', () =>
-        runWithForceColors('-p')
-            .input(fixture)
-            .output(fixtureExpected)
-    );
+    describe('Complex JSON', () => {
+        // FORCE_COLOR=true node bin/jora <test/color-fixture.json >test/color-fixture.compact.expected
+        it('compact', () =>
+            runWithForceColors()
+                .input(fixture)
+                .output(fixtureExpectedCompact)
+        );
+
+        // FORCE_COLOR=true node bin/jora -p <test/color-fixture.json >test/color-fixture.expected
+        it('pretty print', () =>
+            runWithForceColors('-p')
+                .input(fixture)
+                .output(fixtureExpected)
+        );
+    });
 
     it('--no-color should suppress output coloring', () =>
         runWithForceColors('--no-color')

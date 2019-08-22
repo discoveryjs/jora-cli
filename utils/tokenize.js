@@ -1,14 +1,5 @@
-const {
-    STRING,
-    NUMBER,
-    WHITESPACE
-} = require('./constants').TOKENS;
-const {
-    PUNCTUATOR_TOKENS_MAP,
-    KEYWORD_TOKENS_MAP
-} = require('./constants');
-
-// HELPERS
+const TYPE = require('./constants').TYPE;
+const COLON = 0x003A;
 
 // digit
 // A code point between U+0030 DIGIT ZERO (0) and U+0039 DIGIT NINE (9).
@@ -36,9 +27,7 @@ function isWhiteSpace(code) {
     );
 }
 
-// PARSERS
-
-function parseWhitespace(input, index) {
+function findWhitespaceEnd(input, index) {
     const start = index;
 
     for (; index < input.length; index++) {
@@ -47,68 +36,34 @@ function parseWhitespace(input, index) {
         }
     }
 
-    if (start === index) {
-        return null;
-    }
-
-    return {
-        type: WHITESPACE,
-        value: input.substring(start, index)
-    };
+    return index - start;
 }
 
-function parseDelim(input, index) {
-    const char = input.charAt(index);
+function isFollowedByColon(input, index) {
+    index += findWhitespaceEnd(input, index);
 
-    if (char in PUNCTUATOR_TOKENS_MAP) {
-        return {
-            type: PUNCTUATOR_TOKENS_MAP[char],
-            value: char
-        };
-    }
-
-    return null;
+    return index < input.length && input.charCodeAt(index) === COLON;
 }
 
-function parseKeyword(input, index) {
-    for (const name in KEYWORD_TOKENS_MAP) {
-        if (KEYWORD_TOKENS_MAP.hasOwnProperty(name) && input.substr(index, name.length) === name) {
-            return {
-                type: KEYWORD_TOKENS_MAP[name],
-                value: name
-            };
-        }
-    }
-
-    return null;
-}
-
-function parseString(input, index) {
+function findStringEnd(input, index) {
     const start = index;
 
-    if (input.charAt(index) !== '"') {
-        return null;
-    }
-
     for (index++; index < input.length; index++) {
-        switch (input.charAt(index)) {
-            case '"':
-                return {
-                    type: STRING,
-                    value: input.substring(start, index + 1)
-                };
+        switch (input.charCodeAt(index)) {
+            case 0x0022: // "
+                return index - start + 1;
 
-            case '\\':
+            case 0x005C: // \
                 index++;
-                if (input.charCodeAt(index) === 'u') {
+                if (input.charCodeAt(index) === 0x0075) { // u
                     // ensure there is at least 5 chars: a code and closing quote
                     if (input.length - index < 5) {
-                        return null;
+                        return 0;
                     }
 
                     for (let i = 0; i < 4; i++, index++) {
                         if (!isHexDigit(input.charCodeAt(index))) {
-                            return null;
+                            return 0;
                         }
                     }
                 }
@@ -116,21 +71,21 @@ function parseString(input, index) {
         }
     }
 
-    return null;
+    return 0;
 }
 
-function findDecimalNumberEnd(source, offset) {
-    for (; offset < source.length; offset++) {
-        if (!isDigit(source.charCodeAt(offset))) {
+function findDecimalNumberEnd(input, index) {
+    for (; index < input.length; index++) {
+        if (!isDigit(input.charCodeAt(index))) {
             break;
         }
     }
 
-    return offset;
+    return index;
 }
 
 // Consume a number
-function parseNumber(input, index) {
+function findNumberEnd(input, index) {
     const start = index;
     let code = input.charCodeAt(index);
 
@@ -145,7 +100,7 @@ function parseNumber(input, index) {
         index = findDecimalNumberEnd(input, index + 1);
         code = input.charCodeAt(index);
     } else {
-        return null;
+        return 0;
     }
 
     // If the next 2 input code points are U+002E FULL STOP (.) followed by a digit, then:
@@ -172,34 +127,92 @@ function parseNumber(input, index) {
         }
     }
 
-    return {
-        type: NUMBER,
-        value: input.slice(start, index)
-    };
+    return index - start;
 }
 
-module.exports = (input) => {
-    let index = 0;
+module.exports = (input, onToken) => {
+    let type;
 
-    const tokens = [];
+    loop:
+    for (let index = 0; index < input.length;) {
+        let length = 0;
 
-    while (index < input.length) {
-        const token = (
-            parseWhitespace(input, index) ||
-            parseDelim(input, index) ||
-            parseKeyword(input, index) ||
-            parseString(input, index) ||
-            parseNumber(input, index)
-        );
+        switch (input.charCodeAt(index)) {
+            case 0x0009:  // \t
+            case 0x000A:  // \n
+            case 0x000D:  // \r
+            case 0x0020:  // space
+                type = TYPE.WHITESPACE;
+                length = findWhitespaceEnd(input, index);
+                break;
 
-        if (!token) {
+            case 0x0022:  // "
+                length = findStringEnd(input, index);
+                if (length > 0) {
+                    type = isFollowedByColon(input, index + length) ? TYPE.STRING_KEY : TYPE.STRING;
+                }
+                break;
+
+            case 0x007B: // {
+                type = TYPE.LEFT_BRACE;
+                length = 1;
+                break;
+
+            case 0x007D: // }
+                type = TYPE.RIGHT_BRACE;
+                length = 1;
+                break;
+
+            case 0x005B: // [
+                type = TYPE.LEFT_BRACKET;
+                length = 1;
+                break;
+
+            case 0x005D: // ]
+                type = TYPE.RIGHT_BRACKET;
+                length = 1;
+                break;
+
+            case 0x003A: // :
+                type = TYPE.COLON;
+                length = 1;
+                break;
+
+            case 0x002C: // ,
+                type = TYPE.COMMA;
+                length = 1;
+                break;
+
+            case 0x0074: // t
+                if (input.substr(index, 4) === 'true') {
+                    type = TYPE.TRUE;
+                    length = 4;
+                }
+                break;
+
+            case 0x0066: // f
+                if (input.substr(index, 5) === 'false') {
+                    type = TYPE.FALSE;
+                    length = 5;
+                }
+                break;
+
+            case 0x006E: // n
+                if (input.substr(index, 4) === 'null') {
+                    type = TYPE.NULL;
+                    length = 4;
+                }
+                break;
+
+            default:
+                type = TYPE.NUMBER;
+                length = findNumberEnd(input, index);
+        }
+
+        if (length === 0) {
             break;
         }
 
-        tokens.push(token);
-
-        index += token.value.length;
+        onToken(type, index, index += length);
     }
-
-    return tokens;
 };

@@ -1,70 +1,68 @@
 const chalk = require('chalk');
 const { stdout: { hasBasic: SUPPORTED } } = require('supports-color');
 
-const TOKENS = {
-    DEFAULT: 0,         // special for start/end
-    LEFT_BRACE: 1,      // {
-    RIGHT_BRACE: 2,     // }
-    LEFT_BRACKET: 3,    // [
-    RIGHT_BRACKET: 4,   // ]
-    COLON: 5,           // :
-    COMMA: 6,           // ,
-    STRING: 7,          //
-    STRING_KEY: 8,      //
-    NUMBER: 9,          //
-    TRUE: 10,           // true
-    FALSE: 11,          // false
-    NULL: 12,           // null
-    WHITESPACE: 13      //
-};
-
-const PUNCTUATOR_TOKENS_MAP = {
-    '{': TOKENS.LEFT_BRACE,
-    '}': TOKENS.RIGHT_BRACE,
-    '[': TOKENS.LEFT_BRACKET,
-    ']': TOKENS.RIGHT_BRACKET,
-    ':': TOKENS.COLON,
-    ',': TOKENS.COMMA
-};
-
-const KEYWORD_TOKENS_MAP = {
-    'true': TOKENS.TRUE,
-    'false': TOKENS.FALSE,
-    'null': TOKENS.NULL
+const TYPE = {
+    DEFAULT: 0 << 1,            // special for start/end
+    LEFT_BRACE: 1 << 1,         // {
+    RIGHT_BRACE: 2 << 1,        // }
+    LEFT_BRACKET: 3 << 1,       // [
+    RIGHT_BRACKET: 4 << 1,      // ]
+    COLON: 5 << 1,              // :
+    COMMA: 6 << 1,              // ,
+    STRING: 7 << 1,             //
+    STRING_KEY: 8 << 1,         //
+    STRING_KEY_CONTENT: 9 << 1, //
+    NUMBER: 10 << 1,            //
+    TRUE: 11 << 1,              // true
+    FALSE: 12 << 1,             // false
+    NULL: 13 << 1,              // null
+    WHITESPACE: 14 << 1         //
 };
 
 const STYLE = {
-    [TOKENS.LEFT_BRACE]: chalk.gray,
-    [TOKENS.RIGHT_BRACE]: chalk.gray,
-    [TOKENS.LEFT_BRACKET]: chalk.gray,
-    [TOKENS.RIGHT_BRACKET]: chalk.gray,
-    [TOKENS.COLON]: chalk.gray,
-    [TOKENS.COMMA]: chalk.gray,
-    [TOKENS.STRING]: chalk.green,
-    [TOKENS.NUMBER]: chalk.cyan,
-    [TOKENS.TRUE]: chalk.cyan,
-    [TOKENS.FALSE]: chalk.cyan,
-    [TOKENS.NULL]: chalk.bold
+    [TYPE.LEFT_BRACE]: chalk.gray,
+    [TYPE.RIGHT_BRACE]: chalk.gray,
+    [TYPE.LEFT_BRACKET]: chalk.gray,
+    [TYPE.RIGHT_BRACKET]: chalk.gray,
+    [TYPE.COLON]: chalk.gray,
+    [TYPE.COMMA]: chalk.gray,
+    [TYPE.STRING]: chalk.green,
+    [TYPE.STRING_KEY]: chalk.gray,
+    [TYPE.NUMBER]: chalk.cyan,
+    [TYPE.TRUE]: chalk.cyan,
+    [TYPE.FALSE]: chalk.cyan,
+    [TYPE.NULL]: chalk.bold
 };
 
 const STYLE_TRANSITION = [];
-const tokenTypes = Object.keys(TOKENS);
+const tokenTypes = Object.keys(TYPE);
+const extractStyles = obj => (obj || {})._styles || [];
+const arrayToStyleMap = array => array.reduce((map, style) => map.set(style.close, style.open), new Map());
 const styleMap = tokenTypes.reduce(
-    (styleMap, key) =>
-        styleMap.set(TOKENS[key],
-            ((STYLE.hasOwnProperty(TOKENS[key]) ? STYLE[TOKENS[key]] : {})._styles || [])
-                .reduce((map, style) => map.set(style.close, style.open), new Map())
-        ),
+    (styleMap, key) => {
+        const style = key !== 'DEFAULT' ? extractStyles(STYLE[TYPE.DEFAULT]).concat(extractStyles(STYLE[TYPE[key]])) : [];
+        const wsStyle = extractStyles(STYLE[TYPE.DEFAULT])
+            .concat(extractStyles(STYLE[TYPE[key]]).filter(entry =>
+                entry.close === '\u001b[22m' || // bold
+                entry.close === '\u001b[23m' || // italic
+                entry.close === '\u001b[39m'    // color
+            ));
+
+        styleMap.set(TYPE[key], arrayToStyleMap(style));
+        styleMap.set(TYPE[key] + 1, arrayToStyleMap(wsStyle));
+
+        return styleMap;
+    },
     new Map()
 );
 
-for (let i = 0; i < tokenTypes.length; i++) {
+for (let i = 0; i < styleMap.size; i++) {
     const fromStyleMap = styleMap.get(i);
 
     STYLE_TRANSITION[i] = [];
 
-    for (let j = 0; j < tokenTypes.length; j++) {
-        let toStyleMap = j ? styleMap.get(j) : new Map(); // for j reset styles on end
+    for (let j = 0; j < styleMap.size; j++) {
+        let toStyleMap = styleMap.get(j);
         let styleTransitionCodes = '';
 
         fromStyleMap.forEach((fromValue, key) => {
@@ -91,9 +89,7 @@ for (let i = 0; i < tokenTypes.length; i++) {
 
 module.exports = {
     SUPPORTED,
-    TOKENS,
+    TYPE,
     STYLE,
-    STYLE_TRANSITION,
-    PUNCTUATOR_TOKENS_MAP,
-    KEYWORD_TOKENS_MAP
+    STYLE_TRANSITION
 };
