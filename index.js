@@ -105,7 +105,7 @@ const command = cli.create('jora', '[query]')
     .option('-q, --query <query>', 'Jora query')
     .option('-i, --input <filename>', 'Input file')
     .option('-o, --output <filename>', 'Output file (outputs to stdout if not set)')
-    .option('-p, --pretty [indent]', 'Pretty print with optionally specified indentation(4 spaces by default)', value =>
+    .option('-p, --pretty [indent]', 'Pretty print with optionally specified indentation (4 spaces by default)', value =>
         value === undefined ? 4 : Number(value) || false
     , false)
     .option('--no-color', 'Suppress color output')
