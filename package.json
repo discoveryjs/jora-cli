@@ -1,6 +1,6 @@
 {
     "name": "jora-cli",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "Command line interface for Jora",
     "keywords": [],
     "homepage": "https://github.com/discoveryjs/jora-cli",
@@ -50,6 +50,7 @@
     },
     "files": [
         "bin",
+        "utils",
         "index.js"
     ]
 }
