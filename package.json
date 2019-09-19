@@ -1,9 +1,11 @@
 {
     "name": "jora-cli",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "description": "Command line interface for Jora",
-    "keywords": [],
-    "homepage": "https://github.com/discoveryjs/jora-cli",
+    "keywords": [
+        "cli",
+        "jora"
+    ],
     "maintainers": [
         {
             "name": "Alexey Okhrimenko",
@@ -18,9 +20,6 @@
     ],
     "license": "MIT",
     "repository": "discoveryjs/jora-cli",
-    "bugs": {
-        "url": "https://github.com/discoveryjs/jora-cli/issues"
-    },
     "bin": {
         "jora": "./bin/jora"
     },

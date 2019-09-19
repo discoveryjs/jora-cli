@@ -1,4 +1,4 @@
-## next (September 19, 2019)
+## 1.2.0 (September 19, 2019)
 
 - Added `--sandbox` option to open data and query in sandbox (opens in a browser a web interface with injected data and query saved in a temporary file)
 
