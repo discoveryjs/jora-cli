@@ -1,6 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 const cli = require('clap');
+const tempfile = require('tempfile');
+const open = require('open');
+const createSandboxFileContent = require('jora-sandbox');
 const jora = require('jora/dist/jora');
 const colorize = require('./utils/colorize');
 
@@ -17,6 +20,7 @@ function processOptions(options, args) {
     const query = options.query || args[0];
     const pretty = options.pretty || false;
     const color = options.color && colorize.supported;
+    const sandbox = options.sandbox || false;
     let inputFile = options.input;
     let outputFile = options.output;
 
@@ -38,6 +42,7 @@ function processOptions(options, args) {
         query,
         pretty,
         color,
+        sandbox,
         inputFile,
         outputFile
     };
@@ -82,13 +87,24 @@ function serializeResult(data, options) {
 }
 
 function processStream(options) {
-    const query = prepareQuery(options);
     const inputStream = options.inputFile === '<stdin>'
         ? process.stdin
         : fs.createReadStream(options.inputFile);
 
     readFromStream(inputStream, function(source) {
         const data = prepareData(source);
+
+        if (options.sandbox) {
+            const filepath = tempfile('.html');
+            fs.writeFileSync(filepath, createSandboxFileContent(
+                { name: options.inputFile, data },
+                options.query
+            ));
+            open(filepath);
+            return;
+        }
+
+        const query = prepareQuery(options);
         const result = performQuery(query, data, undefined);
         const serializedResult = serializeResult(convertUndefinedToNull(result), options);
 
@@ -109,6 +125,7 @@ const command = cli.create('jora', '[query]')
         value === undefined ? 4 : Number(value) || false
     , false)
     .option('--no-color', 'Suppress color output')
+    .option('-s, --sandbox', 'Output data and query in sandbox')
     .action(function(args) {
         const options = processOptions(this.values, args);
 

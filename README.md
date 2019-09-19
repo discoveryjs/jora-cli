@@ -30,6 +30,7 @@ Options:
   -o, --output <filename>  Output file (outputs to stdout if not set)
   -p, --pretty [indent]    Pretty print with optionally specified indentation (4 spaces by default)
   -q, --query <query>      Jora query
+  -s, --sandbox            Output data and query in sandbox
   -v, --version            Output version
 ```
 

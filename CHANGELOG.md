@@ -1,3 +1,7 @@
+## next (September 19, 2019)
+
+- Added `--sandbox` option to open data and query in sandbox (opens in a browser a web interface with injected data and query saved in a temporary file)
+
 ## 1.1.1 (August 21, 2019)
 
 - Fixed missed files in package
