@@ -116,7 +116,7 @@ function processStream(options) {
     });
 }
 
-const command = cli.create('jora', '[query]')
+const command = cli.command('jora', '[query]')
     .version(require('./package.json').version)
     .option('-q, --query <query>', 'Jora query')
     .option('-i, --input <filename>', 'Input file')

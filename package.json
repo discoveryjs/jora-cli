@@ -34,9 +34,9 @@
     },
     "dependencies": {
         "chalk": "^2.4.2",
-        "clap": "^1.0.9",
-        "jora": "1.0.0-alpha.10",
-        "jora-sandbox": "^1.0.1",
+        "clap": "^2.0.0",
+        "jora": "1.0.0-alpha.11",
+        "jora-sandbox": "^1.1.0",
         "open": "^6.4.0",
         "supports-color": "^7.0.0",
         "tempfile": "^3.0.0"
