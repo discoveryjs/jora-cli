@@ -1,3 +1,8 @@
+## 1.3.0 (December 17, 2019)
+
+- Bumped jora to 1.0.0-alpha.11
+- Bumped jora-sandbox to 1.1.0
+
 ## 1.2.0 (September 19, 2019)
 
 - Added `--sandbox` option to open data and query in sandbox (opens in a browser a web interface with injected data and query saved in a temporary file)
