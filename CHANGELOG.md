@@ -1,3 +1,8 @@
+## next
+
+- Bumped jora to 1.0.0-beta.2
+- Bumped jora-sandbox to 1.2.1
+
 ## 1.3.0 (December 17, 2019)
 
 - Bumped jora to 1.0.0-alpha.11

@@ -35,8 +35,8 @@
     "dependencies": {
         "chalk": "^2.4.2",
         "clap": "^2.0.0",
-        "jora": "1.0.0-alpha.11",
-        "jora-sandbox": "^1.1.0",
+        "jora": "1.0.0-beta.2",
+        "jora-sandbox": "^1.2.1",
         "open": "^6.4.0",
         "supports-color": "^7.0.0",
         "tempfile": "^3.0.0"
@@ -44,7 +44,7 @@
     "devDependencies": {
         "coveralls": "^3.0.4",
         "eslint": "^6.4.0",
-        "mocha": "^5.2.0",
+        "mocha": "^6.2.3",
         "nyc": "^14.1.1"
     },
     "engines": {
