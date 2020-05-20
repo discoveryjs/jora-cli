@@ -1,4 +1,4 @@
-## next
+## 1.4.0 (May 20, 2020)
 
 - Bumped jora to 1.0.0-beta.2
 - Bumped jora-sandbox to 1.2.1
