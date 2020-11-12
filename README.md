@@ -46,8 +46,8 @@ jora -i package.json -q '(dependencies.keys() + devDependencies.keys()).size()'
 
 # find packages with more than a single version
 npm ls --json | jora "
-    ..(dependencies.mapToArray())
-        .group(<key>, <version>)
+    ..(dependencies.entries().({ name: key, ...value }))
+        .group(=>name, =>version)
         .({ name: key, versions: value })
         .[versions.size() > 1]
 ";
