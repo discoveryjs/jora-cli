@@ -1,3 +1,7 @@
+## 1.5.1 (July 29, 2021)
+
+- Bumped jora-sandbox to 1.3.0
+
 ## 1.5.0 (November 12, 2020)
 
 - Bumped jora to 1.0.0-beta.5
