@@ -22,7 +22,7 @@
     "main": "./index",
     "scripts": {
         "test": "mocha --reporter progress",
-        "lint": "eslint *.js test",
+        "lint": "eslint *.js utils test",
         "lint-and-test": "npm run lint && npm test",
         "coverage": "c8 npm test",
         "travis": "c8 npm run lint-and-test && npm run coveralls",

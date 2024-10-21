@@ -1,7 +1,7 @@
 # jora-cli
 
 [![NPM version](https://img.shields.io/npm/v/jora-cli.svg)](https://www.npmjs.com/package/jora-cli)
-[![Build Status](https://travis-ci.org/discoveryjs/jora-cli.svg?branch=master)](https://travis-ci.org/discoveryjs/jora-cli)
+[![Build Status](https://github.com/discoveryjs/jora-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/discoveryjs/jora-cli/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/discoveryjs/jora-cli/badge.svg?branch=master)](https://coveralls.io/github/discoveryjs/jora-cli?)
 
 Command line interface for [Jora](https://github.com/discoveryjs/jora) (a JSON query language)

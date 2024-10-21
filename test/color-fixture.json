@@ -8,8 +8,8 @@
     "false": false,
     "true": true,
     "complexJSON": {
-        "f\"oo\u01234"
-            :-0.1234, "bar": 0e-3,
+        "f\"oo\u01234": -0.1234,
+        "bar": 0e-3,
         "ba/": -0.1234e12,
         "quux": -1.123
     }
