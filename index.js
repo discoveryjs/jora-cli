@@ -1,11 +1,11 @@
-const fs = require('fs');
-const path = require('path');
-const cli = require('clap');
-const tempfile = require('tempfile');
-const open = require('open');
-const createSandboxFileContent = require('jora-sandbox');
-const jora = require('jora/dist/jora');
-const colorize = require('./utils/colorize');
+import fs from 'fs';
+import path from 'path';
+import * as cli from 'clap';
+import tempfile from 'tempfile';
+import open from 'open';
+import createSandboxFileContent from 'jora-sandbox';
+import jora from 'jora';
+import { colorize, colorsSupported } from './utils/colorize.js';
 
 function readFromStream(stream, processBuffer) {
     const buffer = [];
@@ -19,7 +19,7 @@ function readFromStream(stream, processBuffer) {
 function processOptions(options, args) {
     const query = options.query || args[0];
     const pretty = options.pretty || false;
-    const color = options.color && colorize.supported;
+    const color = options.color && colorsSupported;
     const sandbox = options.sandbox || false;
     let inputFile = options.input;
     let outputFile = options.output;
@@ -91,11 +91,11 @@ function processStream(options) {
         ? process.stdin
         : fs.createReadStream(options.inputFile);
 
-    readFromStream(inputStream, function(source) {
+    readFromStream(inputStream, async function(source) {
         const data = prepareData(source);
 
         if (options.sandbox) {
-            const filepath = tempfile('.html');
+            const filepath = tempfile({ extension: '.html' });
             fs.writeFileSync(filepath, createSandboxFileContent(
                 { name: options.inputFile, data },
                 options.query
@@ -116,8 +116,8 @@ function processStream(options) {
     });
 }
 
-const command = cli.command('jora', '[query]')
-    .version(require('./package.json').version)
+const command = cli.command('jora [query]')
+    .version('', '', '', () => console.log(JSON.parse(fs.readFileSync('./package.json')).version))
     .option('-q, --query <query>', 'Jora query')
     .option('-i, --input <filename>', 'Input file')
     .option('-o, --output <filename>', 'Output file (outputs to stdout if not set)')
@@ -126,20 +126,18 @@ const command = cli.command('jora', '[query]')
     , false)
     .option('--no-color', 'Suppress color output')
     .option('-s, --sandbox', 'Output data and query in sandbox')
-    .action(function(args) {
-        const options = processOptions(this.values, args);
+    .action(function({ options: _options, args }) {
+        const options = processOptions(_options, args);
 
         if (options === null) {
-            this.showHelp();
+            command.run(['--help']);
             return;
         }
 
         processStream(options);
     });
 
-module.exports = {
-    run: command.run.bind(command),
-    isCliError: function(err) {
-        return err instanceof cli.Error;
-    }
-};
+export const run = command.run.bind(command);
+export function isCliError(err) {
+    return err instanceof cli.Error;
+}

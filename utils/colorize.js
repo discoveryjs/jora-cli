@@ -1,16 +1,19 @@
-const tokenize = require('./tokenize');
-const {
+import tokenize from './tokenize.js';
+import {
     SUPPORTED,
     STYLE_TRANSITION,
-    TYPE: {
-        DEFAULT,
-        WHITESPACE,
-        STRING_KEY,
-        STRING_KEY_CONTENT
-    }
-} = require('./constants');
+    TYPE
+} from './constants.js';
 
-module.exports = (input) => {
+const {
+    DEFAULT,
+    WHITESPACE,
+    STRING_KEY,
+    STRING_KEY_CONTENT
+} = TYPE;
+
+export const colorsSupported = SUPPORTED;
+export function colorize(input) {
     let prevType = DEFAULT;
     let result = '';
 
@@ -38,6 +41,4 @@ module.exports = (input) => {
     });
 
     return result + STYLE_TRANSITION[prevType][DEFAULT]; // transition to DEFAULT -> reset styles;
-};
-
-module.exports.supported = SUPPORTED;
+}

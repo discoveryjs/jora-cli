@@ -1,7 +1,8 @@
-const chalk = require('chalk');
-const { stdout: { hasBasic: SUPPORTED } } = require('supports-color');
+import ansiStyles from 'ansi-styles';
+import supportsColor from 'supports-color';
 
-const TYPE = {
+export const SUPPORTED = supportsColor.stdout.hasBasic;
+export const TYPE = {
     DEFAULT: 0 << 1,            // special for start/end
     LEFT_BRACE: 1 << 1,         // {
     RIGHT_BRACE: 2 << 1,        // }
@@ -19,34 +20,34 @@ const TYPE = {
     WHITESPACE: 14 << 1         //
 };
 
-const STYLE = {
-    [TYPE.LEFT_BRACE]: chalk.gray,
-    [TYPE.RIGHT_BRACE]: chalk.gray,
-    [TYPE.LEFT_BRACKET]: chalk.gray,
-    [TYPE.RIGHT_BRACKET]: chalk.gray,
-    [TYPE.COLON]: chalk.gray,
-    [TYPE.COMMA]: chalk.gray,
-    [TYPE.STRING]: chalk.green,
-    [TYPE.STRING_KEY]: chalk.gray,
-    [TYPE.NUMBER]: chalk.cyan,
-    [TYPE.TRUE]: chalk.cyan,
-    [TYPE.FALSE]: chalk.cyan,
-    [TYPE.NULL]: chalk.bold
+export const STYLE_TRANSITION = [];
+export const STYLE = {
+    [TYPE.LEFT_BRACE]: ansiStyles.gray,
+    [TYPE.RIGHT_BRACE]: ansiStyles.gray,
+    [TYPE.LEFT_BRACKET]: ansiStyles.gray,
+    [TYPE.RIGHT_BRACKET]: ansiStyles.gray,
+    [TYPE.COLON]: ansiStyles.gray,
+    [TYPE.COMMA]: ansiStyles.gray,
+    [TYPE.STRING]: ansiStyles.green,
+    [TYPE.STRING_KEY]: ansiStyles.gray,
+    [TYPE.NUMBER]: ansiStyles.cyan,
+    [TYPE.TRUE]: ansiStyles.cyan,
+    [TYPE.FALSE]: ansiStyles.cyan,
+    [TYPE.NULL]: ansiStyles.bold
 };
 
-const STYLE_TRANSITION = [];
 const tokenTypes = Object.keys(TYPE);
-const extractStyles = obj => (obj || {})._styles || [];
+const extractStyles = obj => obj ? [obj] : [];
 const arrayToStyleMap = array => array.reduce((map, style) => map.set(style.close, style.open), new Map());
 const styleMap = tokenTypes.reduce(
     (styleMap, key) => {
-        const style = key !== 'DEFAULT' ? extractStyles(STYLE[TYPE.DEFAULT]).concat(extractStyles(STYLE[TYPE[key]])) : [];
-        const wsStyle = extractStyles(STYLE[TYPE.DEFAULT])
-            .concat(extractStyles(STYLE[TYPE[key]]).filter(entry =>
-                entry.close === '\u001b[22m' || // bold
-                entry.close === '\u001b[23m' || // italic
-                entry.close === '\u001b[39m'    // color
-            ));
+        const fromDefaultStyles = extractStyles(STYLE[TYPE.DEFAULT]).concat(extractStyles(STYLE[TYPE[key]]));
+        const style = key !== 'DEFAULT' ? fromDefaultStyles : [];
+        const wsStyle = fromDefaultStyles.filter(entry =>
+            entry.close === '\u001b[22m' || // bold
+            entry.close === '\u001b[23m' || // italic
+            entry.close === '\u001b[39m'    // color
+        );
 
         styleMap.set(TYPE[key], arrayToStyleMap(style));
         styleMap.set(TYPE[key] + 1, arrayToStyleMap(wsStyle));
@@ -86,10 +87,3 @@ for (let i = 0; i < styleMap.size; i++) {
         STYLE_TRANSITION[i].push(styleTransitionCodes);
     }
 }
-
-module.exports = {
-    SUPPORTED,
-    TYPE,
-    STYLE,
-    STYLE_TRANSITION
-};

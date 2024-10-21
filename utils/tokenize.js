@@ -1,4 +1,5 @@
-const TYPE = require('./constants').TYPE;
+import { TYPE } from './constants.js';
+
 const COLON = 0x003A;
 
 // digit
@@ -130,7 +131,7 @@ function findNumberEnd(input, index) {
     return index - start;
 }
 
-module.exports = (input, onToken) => {
+export default (input, onToken) => {
     let type;
 
     loop:

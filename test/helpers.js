@@ -1,6 +1,6 @@
-const { TYPE, STYLE_TRANSITION } = require('../utils/constants');
+import { TYPE, STYLE_TRANSITION } from '../utils/constants.js';
 
-function style(...args) {
+export function style(...args) {
     let result = '';
     let prevType = TYPE.DEFAULT;
 
@@ -12,7 +12,3 @@ function style(...args) {
 
     return result + STYLE_TRANSITION[prevType][TYPE.DEFAULT];
 }
-
-module.exports = {
-    style
-};

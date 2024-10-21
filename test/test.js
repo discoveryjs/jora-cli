@@ -1,10 +1,13 @@
-const assert = require('assert');
-const path = require('path');
-const fs = require('fs');
-const { spawn } = require('child_process');
-const { style } = require('./helpers');
+import assert from 'assert';
+import path from 'path';
+import fs from 'fs';
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
+import { style } from './helpers.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pkgJson = path.join(__dirname, '../package.json');
-const pkgJsonData = require(pkgJson);
+const pkgJsonData = JSON.parse(fs.readFileSync(pkgJson));
 const fixture = fs.readFileSync(path.join(__dirname, 'color-fixture.json'), 'utf8');
 const fixtureData = JSON.parse(fixture);
 const fixtureExpected = fs.readFileSync(path.join(__dirname, 'color-fixture.expected'), 'utf8').trim();
