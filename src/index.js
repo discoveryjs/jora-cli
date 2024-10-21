@@ -5,7 +5,7 @@ import tempfile from 'tempfile';
 import open from 'open';
 import createSandboxFileContent from 'jora-sandbox';
 import jora from 'jora';
-import { colorize, colorsSupported } from './utils/colorize.js';
+import { colorize, colorsSupported } from './colorize.js';
 
 function readFromStream(stream, processBuffer) {
     const buffer = [];

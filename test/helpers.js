@@ -1,4 +1,4 @@
-import { TYPE, STYLE_TRANSITION } from '../utils/constants.js';
+import { TYPE, STYLE_TRANSITION } from '../src/constants.js';
 
 export function style(...args) {
     let result = '';

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import * as cli from '../index.js';
+import * as cli from '../src/index.js';
 
 try {
     cli.run();
