@@ -36,8 +36,6 @@ jobs:
               with:
                 node-version: ${{ matrix.node_version }}
                 cache: 'npm'
-            - run: npm i # old versions of npm doesn't support lockfile v3
-              if: ${{ matrix.node_version < '15' }}
             - run: npm ci
             - run: npm run coverage
             - name: Coveralls Parallel
@@ -77,9 +75,5 @@ jobs:
               with:
                 node-version: ${{ matrix.node_version }}
                 cache: "npm"
-            - run: npm i # old versions of npm doesn't support lockfile v3
-              if: ${{ matrix.node_version < '15' }}
             - run: npm ci
-            - run: npm run transpile
             - run: npm run test
-            - run: npm run test:cjs
