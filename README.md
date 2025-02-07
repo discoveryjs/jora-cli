@@ -20,18 +20,21 @@ npm i -g jora-cli
 > jora -h
 Usage:
 
-  jora [query] [options]
+    jora [query] [options]
 
 Options:
 
-  -h, --help               Output usage information
-  -i, --input <filename>   Input file
-      --no-color           Suppress color output
-  -o, --output <filename>  Output file (outputs to stdout if not set)
-  -p, --pretty [indent]    Pretty print with optionally specified indentation (4 spaces by default)
-  -q, --query <query>      Jora query
-  -s, --sandbox            Output data and query in sandbox
-  -v, --version            Output version
+        --no-color               Suppress color output
+        --dry-run                Don't output result, only report what it would have done
+    -e, --encoding <encoding>    Output encoding: json (default), jsonxl (snapshot9)
+    -f, --force                  Force overwriting output file
+    -h, --help                   Output usage information
+    -i, --input <filename>       Input file
+    -o, --output <filename>      Output file (outputs to stdout if not set)
+    -p, --pretty [indent]        Pretty print with optionally specified indentation (4 spaces by default)
+    -q, --query <query>          Jora query
+        --verbose                Output debug info about actions
+    -v, --version                Output version
 ```
 
 ## Examples
