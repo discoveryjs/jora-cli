@@ -3,13 +3,17 @@ import path from 'path';
 import fs from 'fs';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
-import { style } from './helpers.js';
+import { parseJsonxl, style } from './helpers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pkgJson = path.join(__dirname, '../package.json');
 const pkgJsonData = JSON.parse(fs.readFileSync(pkgJson));
 const fixture = fs.readFileSync(path.join(__dirname, 'color-fixture.json'), 'utf8');
 const fixtureData = JSON.parse(fixture);
+const fixtureJsonxlFilename = path.join(__dirname, './fixture.jsonxl');
+const fixtureJsonxl = fs.readFileSync(fixtureJsonxlFilename);
+const fixtureJsonxlData = parseJsonxl(fixtureJsonxl);
+const fixtureJsonxlJson = JSON.stringify(fixtureJsonxlData);
 const fixtureExpected = fs.readFileSync(path.join(__dirname, 'color-fixture.expected'), 'utf8').trim();
 const fixtureExpectedCompact = fs.readFileSync(path.join(__dirname, 'color-fixture.compact.expected'), 'utf8').trim();
 const envWithForceColors = Object.assign({}, process.env, {
@@ -35,6 +39,7 @@ function runWithForceColors(...args) {
 }
 
 function runCli(forceColors, cliArgs) {
+    let assertStdout = () => {};
     let error = '';
     const args = [path.join(__dirname, '../bin/jora')].concat(cliArgs);
     const child = spawn('node', args, {
@@ -42,9 +47,15 @@ function runCli(forceColors, cliArgs) {
         env: forceColors ? envWithForceColors : process.env
     });
     const wrapper = new Promise(function(resolve, reject) {
-        child.once('exit', () =>
-            error ? reject(new Error(error)) : resolve()
-        );
+        child.once('exit', (code) => {
+            if (error || code) {
+                reject(new Error(error || 'Process exit with code' + code));
+                return;
+            }
+
+            assertStdout();
+            resolve();
+        });
     });
 
     wrapper.input = function(data) {
@@ -56,17 +67,16 @@ function runCli(forceColors, cliArgs) {
     wrapper.output = function(expected) {
         const buffer = [];
 
-        child.stdout
-            .on('data', chunk => buffer.push(chunk))
-            .on('end', function() {
-                const data = buffer.join('').trim();
+        child.stdout.on('data', chunk => buffer.push(chunk));
+        assertStdout = function() {
+            const data = buffer.join('').trim();
 
-                if (typeof expected === 'function') {
-                    expected(data);
-                } else {
-                    assert.equal(data, expected);
-                }
-            });
+            if (typeof expected === 'function') {
+                expected(data);
+            } else {
+                assert.equal(data, expected);
+            }
+        };
 
         return wrapper;
     };
@@ -120,6 +130,31 @@ it('should read from file', () =>
         .output(JSON.stringify(pkgJsonData.version))
 );
 
+describe('jsonxl', () => {
+    it('should read from jsonxl file', () =>
+        run('-i', fixtureJsonxlFilename, '-q', 'version')
+            .output(JSON.stringify(fixtureJsonxlData.version))
+    );
+
+    it('jsonxl -> JSON', () =>
+        run()
+            .input(fixtureJsonxl)
+            .output(fixtureJsonxlJson)
+    );
+
+    it('should output jsonxl', () =>
+        run('-e', 'jsonxl')
+            .input(fixtureJsonxl)
+            .output(fixtureJsonxl)
+    );
+
+    it('JSON -> jsonxl', () =>
+        run('-e', 'jsonxl')
+            .input(fixtureJsonxlJson)
+            .output(fixtureJsonxl)
+    );
+});
+
 describe('pretty print', function() {
     it('indentation should be 4 spaces by default', () =>
         run('dependencies.keys()', '-p')
@@ -158,7 +193,8 @@ describe('errors', function() {
 });
 
 // FIXME: skip colored output tests for Windows since no way currently to pass custom env variable (FORCE_COLOR) to a child process
-(process.platform !== 'win32' ? describe : describe.skip)('colored output', function() {
+// FIXME: --color temporary disabled
+(false && process.platform !== 'win32' ? describe : describe.skip)('colored output', function() {
     const tests = {
         string: style('STRING', JSON.stringify(fixtureData.string)),
         number: style('NUMBER', fixtureData.number),

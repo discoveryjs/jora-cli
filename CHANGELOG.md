@@ -1,3 +1,14 @@
+## next
+
+- Bumped jora to 1.0.0-beta.13
+- Added support for JSONXL (snapshot9) as input encoding
+- Added `--encoding` option to specify output encoding, supported JSON and JSONXL
+- Added `--force` option to enforce overwritting a file
+- Added `--dry-run` option
+- Added `--verbose` option
+- Changed behavior for writing to an existing file specified with the --output option. The operation now fails unless the --force option is used
+- Removed `--sandbox` option (until re-implemented)
+
 ## 1.5.1 (July 29, 2021)
 
 - Bumped jora-sandbox to 1.3.0

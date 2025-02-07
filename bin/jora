@@ -3,7 +3,7 @@
 import * as cli from '../src/index.js';
 
 try {
-    cli.run();
+    await cli.run();
 } catch (e) {
     // output user frendly message if cli error
     if (cli.isCliError(e)) {

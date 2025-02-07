@@ -1,4 +1,5 @@
 import { TYPE, STYLE_TRANSITION } from '../src/constants.js';
+import { decode } from '../src/tmp/jsonxl.js';
 
 export function style(...args) {
     let result = '';
@@ -11,4 +12,8 @@ export function style(...args) {
     }
 
     return result + STYLE_TRANSITION[prevType][TYPE.DEFAULT];
+}
+
+export function parseJsonxl(payload) {
+    return decode(payload);
 }
