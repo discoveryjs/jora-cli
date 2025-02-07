@@ -1,4 +1,4 @@
-## next
+## 2.0.1 (February 6, 2025)
 
 - Fixed missed package files
 
