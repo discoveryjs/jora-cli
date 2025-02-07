@@ -1,3 +1,7 @@
+## next
+
+- Fixed missed package files
+
 ## 2.0.0 (February 6, 2025)
 
 - Bumped jora to 1.0.0-beta.13

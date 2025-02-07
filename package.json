@@ -47,7 +47,6 @@
     },
     "files": [
         "bin",
-        "utils",
-        "index.js"
+        "src"
     ]
 }
