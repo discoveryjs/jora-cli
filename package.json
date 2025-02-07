@@ -19,12 +19,13 @@
         "jora": "./bin/jora"
     },
     "type": "module",
-    "main": "./index",
+    "main": "./src/index.js",
     "scripts": {
         "test": "mocha --reporter progress",
-        "lint": "eslint *.js utils test",
+        "lint": "eslint src/*.js test/*.js",
         "lint-and-test": "npm run lint && npm test",
-        "coverage": "c8 --reporter=lcovonly npm test"
+        "coverage": "c8 --reporter=lcovonly npm test",
+        "prepublishOnly": "npm run lint-and-test"
     },
     "dependencies": {
         "@discoveryjs/json-ext": "^0.6.2",
@@ -38,7 +39,6 @@
     },
     "devDependencies": {
         "c8": "^10.1.2",
-        "coveralls": "^3.1.1",
         "eslint": "^8.57.1",
         "mocha": "^10.7.3"
     },
