@@ -6,6 +6,7 @@
 - Added `--force` option to enforce overwritting a file
 - Added `--dry-run` option
 - Added `--verbose` option
+- Extended the `--query` option to accept a file path containing a Jora query, the file must have a `.jora` extension
 - Changed behavior for writing to an existing file specified with the --output option. The operation now fails unless the --force option is used
 - Removed `--sandbox` option (until re-implemented)
 

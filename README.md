@@ -47,14 +47,18 @@ jora version <package.json
 # get all top level dependencies count
 jora -i package.json -q '(dependencies.keys() + devDependencies.keys()).size()'
 
-# find packages with more than a single version
-npm ls --json | jora "
-    ..(dependencies.entries().({ name: key, ...value }))
-        .group(=>name, =>version)
-        .({ name: key, versions: value })
-        .[versions.size() > 1]
-";
+# find packages with more than a single version (run query from a file)
+npm ls --json | jora find-multi-version-packages.jora
 ```
+
+> The content of `find-multi-version-packages.jora` may be as follows:
+>
+> ```js
+> ..(dependencies.entries().({ name: key, ...value }))
+>     .group(=>name, =>version)
+>     .({ name: key, versions: value })
+>     .[versions.size() > 1]
+> ```
 
 ## Caveats
 

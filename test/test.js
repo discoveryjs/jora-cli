@@ -6,16 +6,18 @@ import { fileURLToPath } from 'url';
 import { parseJsonxl, style } from './helpers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const pkgJson = path.join(__dirname, '../package.json');
-const pkgJsonData = JSON.parse(fs.readFileSync(pkgJson));
-const fixture = fs.readFileSync(path.join(__dirname, 'color-fixture.json'), 'utf8');
+const queryFilename = path.join(__dirname, 'query.jora');
+const fixtureFilename = path.join(__dirname, 'fixture.json');
+const fixture = fs.readFileSync(fixtureFilename, 'utf8');
 const fixtureData = JSON.parse(fixture);
-const fixtureJsonxlFilename = path.join(__dirname, './fixture.jsonxl');
+const fixtureJsonxlFilename = path.join(__dirname, 'fixture.jsonxl');
 const fixtureJsonxl = fs.readFileSync(fixtureJsonxlFilename);
 const fixtureJsonxlData = parseJsonxl(fixtureJsonxl);
 const fixtureJsonxlJson = JSON.stringify(fixtureJsonxlData);
-const fixtureExpected = fs.readFileSync(path.join(__dirname, 'color-fixture.expected'), 'utf8').trim();
-const fixtureExpectedCompact = fs.readFileSync(path.join(__dirname, 'color-fixture.compact.expected'), 'utf8').trim();
+const colorFixture = fs.readFileSync(path.join(__dirname, 'color-fixture.json'), 'utf8');
+const colorFixtureData = JSON.parse(colorFixture);
+const colorFixtureExpected = fs.readFileSync(path.join(__dirname, 'color-fixture.expected'), 'utf8').trim();
+const colorFixtureExpectedCompact = fs.readFileSync(path.join(__dirname, 'color-fixture.compact.expected'), 'utf8').trim();
 const envWithForceColors = Object.assign({}, process.env, {
     FORCE_COLOR: true
 });
@@ -116,19 +118,33 @@ describe('non-JSON primitives', () => {
 
 it('should output version', () =>
     run('-v')
-        .output(pkgJsonData.version)
+        .output(fixtureData.version)
 );
 
 it('should read content from stdin if no file specified', () =>
     run('version')
-        .input(JSON.stringify(pkgJsonData))
-        .output(JSON.stringify(pkgJsonData.version))
+        .input(fixture)
+        .output(JSON.stringify(fixtureData.version))
 );
 
 it('should read from file', () =>
-    run('-i', pkgJson, '-q', 'version')
-        .output(JSON.stringify(pkgJsonData.version))
+    run('-i', fixtureFilename, '-q', 'version')
+        .output(JSON.stringify(fixtureData.version))
 );
+
+describe('query from a file', () => {
+    it('as arg', () =>
+        run(queryFilename)
+            .input(fixture)
+            .output(JSON.stringify(fixtureData.version))
+    );
+
+    it('as option', () =>
+        run('-q', queryFilename)
+            .input(fixture)
+            .output(JSON.stringify(fixtureData.version))
+    );
+});
 
 describe('jsonxl', () => {
     it('should read from jsonxl file', () =>
@@ -158,14 +174,14 @@ describe('jsonxl', () => {
 describe('pretty print', function() {
     it('indentation should be 4 spaces by default', () =>
         run('dependencies.keys()', '-p')
-            .input(JSON.stringify(pkgJsonData))
-            .output(JSON.stringify(Object.keys(pkgJsonData.dependencies), null, 4))
+            .input(fixture)
+            .output(JSON.stringify(Object.keys(fixtureData.dependencies), null, 4))
     );
 
     it('indentation should be as specified', () =>
         run('dependencies.keys()', '-p', '3')
-            .input(JSON.stringify(pkgJsonData))
-            .output(JSON.stringify(Object.keys(pkgJsonData.dependencies), null, 3))
+            .input(fixture)
+            .output(JSON.stringify(Object.keys(fixtureData.dependencies), null, 3))
     );
 });
 
@@ -194,10 +210,10 @@ describe('errors', function() {
 
 // FIXME: skip colored output tests for Windows since no way currently to pass custom env variable (FORCE_COLOR) to a child process
 // FIXME: --color temporary disabled
-(false && process.platform !== 'win32' ? describe : describe.skip)('colored output', function() {
+(process.platform !== 'win32' ? describe : describe.skip)('colored output', function() {
     const tests = {
-        string: style('STRING', JSON.stringify(fixtureData.string)),
-        number: style('NUMBER', fixtureData.number),
+        string: style('STRING', JSON.stringify(colorFixtureData.string)),
+        number: style('NUMBER', colorFixtureData.number),
         emptyArray: style('LEFT_BRACKET', '[', 'RIGHT_BRACKET', ']'),
         emptyObject: style('LEFT_BRACE', '{', 'RIGHT_BRACE', '}'),
         singlePropObject: style('LEFT_BRACE', '{', 'STRING_KEY', '"', 'STRING_KEY_CONTENT', 'foo', 'STRING_KEY', '"', 'COLON', ':', 'STRING', '"test"', 'RIGHT_BRACE', '}'),
@@ -209,7 +225,7 @@ describe('errors', function() {
     Object.keys(tests).forEach(key => {
         it(key, () =>
             runWithForceColors(key)
-                .input(fixture)
+                .input(colorFixture)
                 .output(tests[key])
         );
     });
@@ -230,21 +246,21 @@ describe('errors', function() {
         // FORCE_COLOR=true node bin/jora <test/color-fixture.json >test/color-fixture.compact.expected
         it('compact', () =>
             runWithForceColors()
-                .input(fixture)
-                .output(fixtureExpectedCompact)
+                .input(colorFixture)
+                .output(colorFixtureExpectedCompact)
         );
 
         // FORCE_COLOR=true node bin/jora -p <test/color-fixture.json >test/color-fixture.expected
         it('pretty print', () =>
             runWithForceColors('-p')
-                .input(fixture)
-                .output(fixtureExpected)
+                .input(colorFixture)
+                .output(colorFixtureExpected)
         );
     });
 
     it('--no-color should suppress output coloring', () =>
         runWithForceColors('--no-color')
-            .input(fixture)
-            .output(JSON.stringify(fixtureData))
+            .input(colorFixture)
+            .output(JSON.stringify(colorFixtureData))
     );
 });

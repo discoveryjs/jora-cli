@@ -52,6 +52,22 @@ function safeOperation(name, fn) {
     }
 }
 
+function extractQuery(queryOrFilename) {
+    const maybeFilename = normFilepath(queryOrFilename);
+
+    if (typeof maybeFilename === 'string' && path.extname(maybeFilename) === '.jora') {
+        if (!fs.existsSync(maybeFilename)) {
+            throw new cli.Error(`ERROR! No such file or directory: ${maybeFilename}`);
+        }
+
+        return safeOperation('Read jora query from file', () =>
+            fs.readFileSync(maybeFilename, 'utf8')
+        );
+    }
+
+    return queryOrFilename;
+}
+
 function prepareQuery(query) {
     return safeOperation('Jora query prepare', () =>
         jora(query || '')
@@ -83,7 +99,7 @@ function normFormat(value) {
 const encodings = ['json', 'jsonxl'];
 const command = cli.command('jora [query]')
     .version('', '', '', () => console.log(JSON.parse(fs.readFileSync('./package.json')).version))
-    .option('-q, --query <query>', 'Jora query', normFilepath)
+    .option('-q, --query <query>', 'Jora query or path to a query file with extension .jora', normFilepath)
     .option('-i, --input <filename>', 'Input file', normFilepath)
     .option('-o, --output <filename>', 'Output file (outputs to stdout if not set)')
     .option('-e, --encoding <encoding>', 'Output encoding: json (default), jsonxl (snapshot9)', normFormat, 'json')
@@ -134,7 +150,7 @@ const command = cli.command('jora [query]')
         //     return;
         // }
 
-        const query = options.query || args[0];
+        const query = extractQuery(options.query || args[0]);
         const queryFn = prepareQuery(query);
         const resultData = performQuery(queryFn, input.data, undefined);
         const encoding = options.encoding;
