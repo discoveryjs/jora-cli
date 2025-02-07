@@ -1,4 +1,4 @@
-## next
+## 2.0.0 (February 6, 2025)
 
 - Bumped jora to 1.0.0-beta.13
 - Added support for JSONXL (snapshot9) as input encoding
