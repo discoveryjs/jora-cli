@@ -39,26 +39,46 @@ Options:
 
 ## Examples
 
-Then you can do this wonderful requests in terminal
-```bash
-# get a single field, e.g. version
-jora version <package.json
+- Get a single field from, e.g. "version":
 
-# get all top level dependencies count
-jora -i package.json -q '(dependencies.keys() + devDependencies.keys()).size()'
+  ```bash
+  jora version <package.json
+  ```
 
-# find packages with more than a single version (run query from a file)
-npm ls --json | jora find-multi-version-packages.jora
-```
+- Get all top level dependencies count:
 
-> The content of `find-multi-version-packages.jora` may be as follows:
->
-> ```js
-> ..(dependencies.entries().({ name: key, ...value }))
->     .group(=>name, =>version)
->     .({ name: key, versions: value })
->     .[versions.size() > 1]
-> ```
+  ```bash
+  jora -i package.json -q '(dependencies.keys() + devDependencies.keys()).size()'
+  ```
+
+- Find packages with more than a single version (run query from a file)
+
+  ```bash
+  npm ls --json | jora find-multi-version-packages.jora
+  ```
+
+  The content of `find-multi-version-packages.jora` may be as follows:
+
+  ```js
+  ..(dependencies.entries().({ name: key, ...value }))
+      .group(=>name, =>version)
+      .({ name: key, versions: value })
+      .[versions.size() > 1]
+  ```
+
+- `jora-cli` supports queries from JSONXl, and conversion between JSON and JSONXL. JSONXL is a binary replacement for JSON. It is supported by any app built on [Discovery.js](https://github.com/discoveryjs/discovery), including [JsonDiscovery](https://github.com/discoveryjs/JsonDiscovery), [CPUpro](https://github.com/discoveryjs/cpupro) and [Statoscope](https://github.com/statoscope/statoscope). JSONXL not only saves space and transfer time but also offers faster decoding and a lower memory footprint, which is beneficial for processing large datasets.
+    - Queries for JSONXL input work the same ways as for JSON:
+      ```bash
+      jora <input.jsonxl "select.something"
+      ```
+    - Convert JSON into JSONXL:
+      ```bash
+      jora <input.json >output.jsonxl -e jsonxl
+      ```
+    - Convert JSONXL into JSON
+      ```
+      jora <input.jsonxl >output.json
+      ```
 
 ## Caveats
 
