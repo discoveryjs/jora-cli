@@ -4,21 +4,6 @@ import { parseChunked } from '@discoveryjs/json-ext';
 import * as clap from 'clap';
 
 const now = typeof performace !== 'undefined' && typeof performance.now === 'function' ? performance.now : Date.now;
-const concatChunks = typeof Buffer === 'function' && typeof Buffer.concat === 'function'
-    ? Buffer.concat
-    : function bufferCocnatPolyfill(chunks, totalLength) {
-        // Create a new TypedArray with the combined length
-        const combinedChunks = new Uint8Array(totalLength);
-
-        // Iterate through the input arrays and set their values in the combinedChunks array
-        let offset = 0;
-        for (const array of chunks) {
-            combinedChunks.set(array, offset);
-            offset += array.length;
-        }
-
-        return combinedChunks;
-    };
 
 async function readFromStream(stream, totalSize, setStageProgress = async () => {}) {
     const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB
@@ -69,7 +54,7 @@ async function readFromStream(stream, totalSize, setStageProgress = async () => 
         }
 
         // Concat chunks
-        return concatChunks(chunks, size);
+        return Buffer.concat(chunks, size);
     }
 
     async function* streamConsumer(firstChunk, iterator) {

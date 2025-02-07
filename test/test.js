@@ -1,6 +1,7 @@
 import assert from 'assert';
 import path from 'path';
 import fs from 'fs';
+import tempfile from 'tempfile';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { parseJsonxl, style } from './helpers.js';
@@ -50,6 +51,7 @@ function runWithForceColors(...args) {
 
 function runCli(forceColors, cliArgs) {
     let assertStdout = () => {};
+    let assertStderr = null;
     let error = '';
     const args = [path.join(__dirname, '../bin/jora')].concat(cliArgs);
     const child = spawn('node', args, {
@@ -58,12 +60,13 @@ function runCli(forceColors, cliArgs) {
     });
     const wrapper = new Promise(function(resolve, reject) {
         child.once('exit', (code) => {
-            if (error || code) {
+            if ((error && !assertStderr) || code) {
                 reject(new Error(error || 'Process exit with code' + code));
                 return;
             }
 
             assertStdout();
+            assertStderr?.();
             resolve();
         });
     });
@@ -83,6 +86,27 @@ function runCli(forceColors, cliArgs) {
 
             if (typeof expected === 'function') {
                 expected(data);
+            } else if (expected instanceof RegExp) {
+                assert.match(data, expected);
+            } else {
+                assert.equal(data, expected);
+            }
+        };
+
+        return wrapper;
+    };
+
+    wrapper.stderr = function(expected) {
+        const buffer = [];
+
+        child.stderr.on('data', chunk => buffer.push(chunk));
+        assertStderr = function() {
+            const data = buffer.join('').trim();
+
+            if (typeof expected === 'function') {
+                expected(data);
+            } else if (expected instanceof RegExp) {
+                assert.match(data, expected);
             } else {
                 assert.equal(data, expected);
             }
@@ -140,6 +164,31 @@ it('should read from file', () =>
         .output(JSON.stringify(fixture.data.version))
 );
 
+it('should write to file', async () => {
+    const filename = tempfile({ extension: '.json' });
+
+    await run('-o', filename, '-q', 'version')
+        .input(fixture.string)
+        .output('');
+
+    assert(fs.existsSync(filename));
+    assert.strictEqual(fs.readFileSync(filename, 'utf8'), JSON.stringify(fixture.data.version));
+});
+
+it('--verbose', () =>
+    run('--verbose', 'version')
+        .input(fixture.string)
+        .output(JSON.stringify(fixture.data.version))
+        .stderr(/Input from/)
+);
+
+it('--dry-run', () =>
+    run('--dry-run', 'version')
+        .input(fixture.string)
+        .output('')
+        .stderr(/Input from/)
+);
+
 describe('query from a file', () => {
     it('as arg', () =>
         run(queryFilename)
@@ -176,6 +225,13 @@ describe('jsonxl', () => {
         run('-e', 'jsonxl')
             .input(fixtureJsonxl.string)
             .output(fixtureJsonxl.raw)
+    );
+
+    it('--dry-run jsonxl output', () =>
+        run('--dry-run', 'version', '-e', 'jsonxl')
+            .input(fixture.string)
+            .output('')
+            .stderr(/Encoded jsonxl/)
     );
 });
 
