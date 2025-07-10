@@ -42,6 +42,12 @@ import { writeToDestination } from './write.js';
 //     };
 // }
 
+function outputVersion() {
+    const { version } = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url)));
+
+    console.log(version);
+}
+
 function safeOperation(name, fn) {
     try {
         return fn();
@@ -98,7 +104,7 @@ function normFormat(value) {
 
 const encodings = ['json', 'jsonxl'];
 const command = cli.command('jora [query]')
-    .version('', '', '', () => console.log(JSON.parse(fs.readFileSync('./package.json')).version))
+    .version('', '', '', outputVersion)
     .option('-q, --query <query>', 'Jora query or path to a query file with extension .jora', normFilepath)
     .option('-i, --input <filename>', 'Input file', normFilepath)
     .option('-o, --output <filename>', 'Output file (outputs to stdout if not set)')
