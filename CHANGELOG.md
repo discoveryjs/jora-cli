@@ -1,3 +1,7 @@
+## next
+
+- Bumped jora to 1.0.0-beta.15 (fixes a security issue, see [1.0.0-beta.14 release notes](https://github.com/discoveryjs/jora/releases/tag/v1.0.0-beta.14))
+
 ## 2.0.1 (February 6, 2025)
 
 - Fixed missed package files
