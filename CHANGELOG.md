@@ -1,4 +1,4 @@
-## next
+## 2.0.2 (July 10, 2025)
 
 - Bumped jora to 1.0.0-beta.15 (fixes a security issue, see [1.0.0-beta.14 release notes](https://github.com/discoveryjs/jora/releases/tag/v1.0.0-beta.14))
 
