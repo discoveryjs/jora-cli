@@ -6,27 +6,35 @@ import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { parseJsonxl, style } from './helpers.js';
 
-function testFile(filename, jsonxl) {
-    const filepath = path.join(__dirname, filename);
+const testFileParsers = {
+    '.json': JSON.parse,
+    '.jsonxl': parseJsonxl
+};
+
+function fixtureFile(filename) {
+    const filepath = path.join(fixtureDir, filename);
     const raw = fs.readFileSync(filepath);
-    const data = jsonxl ? parseJsonxl(raw) : JSON.parse(raw);
+    const parser = testFileParsers[path.extname(filepath)] || null;
+    const data = parser && parser(raw);
 
     return {
         path: filepath,
         raw,
+        text: path.extname(filepath) !== '.jsonxl' ? raw.toString('utf8') : undefined,
         data,
         string: JSON.stringify(data)
     };
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const queryFilename = path.join(__dirname, 'query.jora');
-const packageJson = testFile('../package.json');
-const fixture = testFile('fixture.json');
-const fixtureJsonxl = testFile('fixture.jsonxl', true);
-const colorFixture = testFile('color-fixture.json');
-const colorFixtureExpected = fs.readFileSync(path.join(__dirname, 'color-fixture.expected'), 'utf8').trim();
-const colorFixtureExpectedCompact = fs.readFileSync(path.join(__dirname, 'color-fixture.compact.expected'), 'utf8').trim();
+const fixtureDir = path.join(__dirname, '../fixtures');
+const queryFilename = path.join(fixtureDir, 'query.jora');
+const packageJson = fixtureFile('../package.json');
+const fixture = fixtureFile('data.json');
+const fixtureJsonxl = fixtureFile('data.jsonxl');
+const colorFixture = fixtureFile('color-output.json');
+const colorFixtureExpected = fixtureFile('color-output.expected').text.trim();
+const colorFixtureExpectedCompact = fixtureFile('color-output.compact.expected').text.trim();
 const envWithForceColors = Object.assign({}, process.env, {
     FORCE_COLOR: true
 });
