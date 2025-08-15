@@ -1,3 +1,7 @@
+## next
+
+- Fixed displaying of output progress for jsonxl
+
 ## 2.0.3 (July 10, 2025)
 
 - Fixed an exception when running `jora -v`

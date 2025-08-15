@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { encode } from './tmp/jsonxl.js';
 import { colorize } from './colorize.js';
@@ -10,6 +9,12 @@ const now = typeof performace !== 'undefined' && typeof performance.now === 'fun
 const stringBytes = typeof Buffer === 'function' && typeof Buffer.byteLength === 'function'
     ? Buffer.byteLength
     : (str) => str.length; // incorrect but fast fallback
+
+function* createChunkIterator(data, chunkSize = 64 * 1024) {
+    for (let offset = 0; offset < data.length; offset += chunkSize) {
+        yield data.subarray(offset, offset + chunkSize);
+    }
+}
 
 async function writeIntoStream(stream, data, options, setStageProgress = () => {}) {
     const { autoEncoding, encoding } = options;
@@ -30,7 +35,7 @@ async function writeIntoStream(stream, data, options, setStageProgress = () => {
                 time: now() - startTime
             });
 
-            payload = Readable.from(jsonxl);
+            payload = createChunkIterator(jsonxl, /* 1MB */ 1024 * 1024);
             totalSize = jsonxl.byteLength;
 
             break;
