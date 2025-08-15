@@ -1,5 +1,8 @@
 ## next
 
+- Updated jsonxl
+    - Fixed an edge case for signed numbers in the range ±[MAX_SAFE_INTEGER/2 … MAX_SAFE_INTEGER].
+    - Removed the limitation on total encoded string length exceeding the maximum string length (~500 MB for V8)
 - Fixed displaying of output progress for jsonxl
 
 ## 2.0.3 (July 10, 2025)
