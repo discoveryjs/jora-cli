@@ -1,46 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import * as cli from 'clap';
-// import tempfile from 'tempfile';
-// import open from 'open';
-// import createSandboxFileContent from 'jora-sandbox';
 import jora from 'jora';
 import { colorsSupported } from './colorize.js';
 import { readFromFile, readFromStdin } from './read-from-stream.js';
 import { createDefaultReporter, SilentWriter, StreamWriter, TTYWriter } from './reporter.js';
 import { writeToDestination } from './write.js';
-
-// function processOptions(options, args) {
-//     const query = options.query || args[0];
-//     const pretty = options.pretty || false;
-//     const color = options.color && colorsSupported;
-//     const sandbox = options.sandbox || false;
-//     let inputFile = options.input;
-//     let outputFile = options.output;
-
-//     if (process.stdin.isTTY && process.argv.length <= 2) {
-//         return null;
-//     }
-
-//     if (!inputFile) {
-//         inputFile = '<stdin>';
-//     } else {
-//         inputFile = path.resolve(process.cwd(), inputFile);
-//     }
-
-//     if (outputFile) {
-//         outputFile = path.resolve(process.cwd(), outputFile);
-//     }
-
-//     return {
-//         query,
-//         pretty,
-//         color,
-//         sandbox,
-//         inputFile,
-//         outputFile
-//     };
-// }
 
 function outputVersion() {
     const { version } = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url)));
@@ -145,16 +110,6 @@ const command = cli.command('jora [query]')
 
             throw e;
         }
-
-        // if (options.sandbox) {
-        //     const filepath = tempfile({ extension: '.html' });
-        //     fs.writeFileSync(filepath, createSandboxFileContent(
-        //         { name: options.inputFile, data },
-        //         options.query
-        //     ));
-        //     open(filepath);
-        //     return;
-        // }
 
         const query = extractQuery(options.query || args[0]);
         const queryFn = prepareQuery(query);
