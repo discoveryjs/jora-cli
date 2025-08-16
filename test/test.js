@@ -71,8 +71,8 @@ function assertCompressedFactory(type) {
     return function(expected) {
         return function(actual) {
             assert.deepEqual(decompress(actual), expected);
-        }
-    }
+        };
+    };
 }
 
 function createStreamAssert(stream, expected) {
@@ -328,7 +328,7 @@ describe('compression', function() {
                     .input(fixtureJsonxl.raw)
                     .output(assertCompressed(fixtureJsonxl.raw))
             );
-        })
+        });
     });
 });
 
