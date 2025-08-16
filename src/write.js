@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { pipeline } from 'node:stream/promises';
-import { encode } from './tmp/jsonxl.js';
+import { encode } from './tmp/jsonxl-snapshot9.js';
 import { colorize } from './colorize.js';
 import { stringifyChunked, stringifyInfo } from '@discoveryjs/json-ext';
 import * as clap from 'clap';

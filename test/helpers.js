@@ -1,5 +1,5 @@
 import { TYPE, STYLE_TRANSITION } from '../src/constants.js';
-import { decode } from '../src/tmp/jsonxl.js';
+import { decode } from '../src/tmp/jsonxl-snapshot9.js';
 
 export function style(...args) {
     let result = '';

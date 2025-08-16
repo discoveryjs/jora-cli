@@ -93,9 +93,14 @@ export function createDefaultReporter({ log, logTemp }) {
                 log((params.newline ? '\n' : '') + '----------------');
                 break;
 
-            case 'input-encoding':
+            case 'input-encoding': {
+                if (params.compression) {
+                    log(`  Compression: ${params.compression} (auto detected)`);
+                }
+
                 log(`  Encoding: ${params.encoding || '<unknown>'} (auto detected)`);
                 break;
+            }
 
             case 'output-encoding':
                 log(`  Encoding: ${params.encoding || '<unknown>'}${params.autoEncoding ? ' (auto selected)' : ''}`);
@@ -121,7 +126,11 @@ export function createDefaultReporter({ log, logTemp }) {
                 const { completed, total, done, elapsed } = params;
 
                 if (!done) {
-                    logTemp(`  Reading data... ${formatSize(completed).padStart(6, ' ')}${total ? ` (${(100 * completed / total).toFixed(0)}%)` : ''}`);
+                    const progress = completed
+                        ? ` ${formatSize(completed).padStart(6, ' ')}${total ? ` (${(100 * completed / total).toFixed(0)}%)` : ''}`
+                        : '';
+
+                    logTemp(`  Reading data...${progress}`);
                 } else {
                     log(`  Read ${formatSize(completed, true)} in ${formatTime(elapsed)}`);
                 }

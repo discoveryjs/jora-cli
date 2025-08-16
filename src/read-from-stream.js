@@ -1,41 +1,59 @@
 import fs from 'node:fs';
-import { decode, parseHeader } from './tmp/jsonxl.js';
-import { parseChunked } from '@discoveryjs/json-ext';
+import { Readable } from 'node:stream';
 import * as clap from 'clap';
+import * as buildinEncodings from './encodings/index.js';
+import { consumeStreamAsTypedArray, defaultStreamTransformers, ProgressTransformer, StreamTransformSelector } from './read-from-stream-utils.js';
 
 const now = typeof performace !== 'undefined' && typeof performance.now === 'function' ? performance.now : Date.now;
 
 async function readFromStream(stream, totalSize, setStageProgress = async () => {}) {
-    const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB
     const streamStartTime = now();
-    const iterator = stream[Symbol.asyncIterator]();
-    const firstChunk = await iterator.next();
+    const encodings = [
+        buildinEncodings.jsonxl,
+        buildinEncodings.json
+    ];
     let decodingTime = 0;
-    let decodeRequest;
+    let compression = false;
     let encoding = 'unknown';
     let size = 0;
 
-    try {
-        // parseHeader() throws if payload has wrong header
-        const { version } = parseHeader(firstChunk.value);
+    await setStageProgress('reading', getProgressState(false));
 
-        // jsonxl
-        encoding = 'jsonxl/snapshot' + version;
-        decodeRequest = consumeChunksAsSingleTypedArray(streamConsumer(firstChunk, iterator), totalSize, setStageProgress)
-            .then(measureDecodingTime(decode));
-    } catch (e) {
-        // fallback to JSON
-        encoding = 'json';
-        decodeRequest = parseChunked(streamConsumer(firstChunk, iterator));
+    const streamPipeline = Readable.toWeb(stream)
+        .pipeThrough(new TransformStream(new ProgressTransformer(setProgress)))
+        .pipeThrough(new TransformStream(new StreamTransformSelector(defaultStreamTransformers, (name) => compression = name)));
+    const reader = streamPipeline.getReader();
+
+    try {
+        const firstChunk = await reader.read();
+        const { value, done } = firstChunk;
+
+        if (done) {
+            throw new Error('Empty payload');
+        }
+
+        for (const { name, test, streaming, decode } of encodings) {
+            if (test(value)) {
+                encoding = name;
+
+                setStageProgress('input-encoding', { encoding, compression });
+
+                const readerIterator = createReaderIterator(reader, firstChunk);
+                const decodeRequest = streaming
+                    ? decode(readerIterator)
+                    : consumeStreamAsTypedArray(readerIterator).then(measureDecodingTime(decode));
+                const data = await decodeRequest;
+
+                return { data, compression, encoding, size, decodingTime };
+            }
+        }
+
+        throw new Error('No matched encoding found for the payload');
+    } finally {
+        reader.releaseLock();
     }
 
-    setStageProgress('input-encoding', { encoding });
-
-    const data = await decodeRequest;
-
-    return { data, encoding, size, decodingTime };
-
-    function getProgress(done) {
+    function getProgressState(done) {
         return {
             done,
             elapsed: now() - streamStartTime,
@@ -45,21 +63,15 @@ async function readFromStream(stream, totalSize, setStageProgress = async () => 
         };
     }
 
-    async function consumeChunksAsSingleTypedArray(iterator) {
-        const chunks = [];
+    async function setProgress(done, sizeDelta = 0) {
+        size += sizeDelta;
 
-        // Consume chunks
-        for await (const chunk of iterator) {
-            chunks.push(chunk);
-        }
-
-        // Concat chunks
-        return Buffer.concat(chunks, size);
+        await setStageProgress('reading', getProgressState(done));
     }
 
-    async function* streamConsumer(firstChunk, iterator) {
+    async function* createReaderIterator(reader, firstChunk) {
         while (true) {
-            const { value, done } = firstChunk || await iterator.next();
+            const { value, done } = firstChunk || await reader.read();
 
             firstChunk = undefined;
 
@@ -67,23 +79,10 @@ async function readFromStream(stream, totalSize, setStageProgress = async () => 
                 break;
             }
 
-            for (let offset = 0; offset < value.length; offset += CHUNK_SIZE) {
-                const chunkDecodingStartTime = now();
-                const chunk = offset === 0 && value.length - offset < CHUNK_SIZE
-                    ? value
-                    : value.slice(offset, offset + CHUNK_SIZE);
-
-                yield chunk;
-
-                decodingTime += now() - chunkDecodingStartTime;
-                size += chunk.length;
-
-                await setStageProgress('reading', getProgress(false));
-            }
+            const startDecodingTime = now();
+            yield value;
+            decodingTime += now() - startDecodingTime;
         }
-
-        // progress done
-        await setStageProgress('reading', getProgress(true));
     }
 
     function measureDecodingTime(decode) {
