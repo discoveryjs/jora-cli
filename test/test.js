@@ -10,6 +10,7 @@ const testFileParsers = {
     '.json': JSON.parse,
     '.jsonxl': parseJsonxl
 };
+const isBinary = new Set(['.jsonxl', '.jsonxl.gz', '.json.gz']);
 
 function fixtureFile(filename) {
     const filepath = path.join(fixtureDir, filename);
@@ -20,7 +21,7 @@ function fixtureFile(filename) {
     return {
         path: filepath,
         raw,
-        text: path.extname(filepath) !== '.jsonxl' ? raw.toString('utf8') : undefined,
+        text: !isBinary.has(path.extname(filepath)) ? raw.toString('utf8') : undefined,
         data,
         string: JSON.stringify(data)
     };
@@ -30,7 +31,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixtureDir = path.join(__dirname, '../fixtures');
 const queryFilename = path.join(fixtureDir, 'query.jora');
 const packageJson = fixtureFile('../package.json');
-const fixture = fixtureFile('data.json');
+const fixtureJson = fixtureFile('data.json');
 const fixtureJsonxl = fixtureFile('data.jsonxl');
 const colorFixture = fixtureFile('color-output.json');
 const colorFixtureExpected = fixtureFile('color-output.expected').text.trim();
@@ -55,6 +56,27 @@ function run(...args) {
 
 function runWithForceColors(...args) {
     return runCli(true, args);
+}
+
+function createStreamAssert(stream, expected) {
+    const buffer = [];
+
+    stream.on('data', chunk => buffer.push(chunk));
+
+    return function() {
+        const data = Buffer.concat(buffer);
+        buffer.length = 0;
+
+        if (typeof expected === 'function') {
+            expected(data);
+        } else if (expected instanceof RegExp) {
+            assert.match(data.toString().trimEnd(), expected);
+        } else if (typeof expected === 'string') {
+            assert.equal(data.toString().trimEnd(), expected);
+        } else {
+            assert.deepEqual(data, Buffer.from(expected));
+        }
+    };
 }
 
 function runCli(forceColors, cliArgs) {
@@ -86,40 +108,12 @@ function runCli(forceColors, cliArgs) {
     };
 
     wrapper.output = function(expected) {
-        const buffer = [];
-
-        child.stdout.on('data', chunk => buffer.push(chunk));
-        assertStdout = function() {
-            const data = buffer.join('').trim();
-
-            if (typeof expected === 'function') {
-                expected(data);
-            } else if (expected instanceof RegExp) {
-                assert.match(data, expected);
-            } else {
-                assert.equal(data, expected);
-            }
-        };
-
+        assertStdout = createStreamAssert(child.stdout, expected);
         return wrapper;
     };
 
     wrapper.stderr = function(expected) {
-        const buffer = [];
-
-        child.stderr.on('data', chunk => buffer.push(chunk));
-        assertStderr = function() {
-            const data = buffer.join('').trim();
-
-            if (typeof expected === 'function') {
-                expected(data);
-            } else if (expected instanceof RegExp) {
-                assert.match(data, expected);
-            } else {
-                assert.equal(data, expected);
-            }
-        };
-
+        assertStderr = createStreamAssert(child.stderr, expected);
         return wrapper;
     };
 
@@ -163,36 +157,36 @@ it('should output version', () =>
 
 it('should read content from stdin if no file specified', () =>
     run('version')
-        .input(fixture.string)
-        .output(JSON.stringify(fixture.data.version))
+        .input(fixtureJson.string)
+        .output(JSON.stringify(fixtureJson.data.version))
 );
 
 it('should read from file', () =>
-    run('-i', fixture.path, '-q', 'version')
-        .output(JSON.stringify(fixture.data.version))
+    run('-i', fixtureJson.path, '-q', 'version')
+        .output(JSON.stringify(fixtureJson.data.version))
 );
 
 it('should write to file', async () => {
     const filename = tempfile({ extension: '.json' });
 
     await run('-o', filename, '-q', 'version')
-        .input(fixture.string)
+        .input(fixtureJson.string)
         .output('');
 
     assert(fs.existsSync(filename));
-    assert.strictEqual(fs.readFileSync(filename, 'utf8'), JSON.stringify(fixture.data.version));
+    assert.strictEqual(fs.readFileSync(filename, 'utf8'), JSON.stringify(fixtureJson.data.version));
 });
 
 it('--verbose', () =>
     run('--verbose', 'version')
-        .input(fixture.string)
-        .output(JSON.stringify(fixture.data.version))
+        .input(fixtureJson.string)
+        .output(JSON.stringify(fixtureJson.data.version))
         .stderr(/Input from/)
 );
 
 it('--dry-run', () =>
     run('--dry-run', 'version')
-        .input(fixture.string)
+        .input(fixtureJson.string)
         .output('')
         .stderr(/Input from/)
 );
@@ -200,14 +194,14 @@ it('--dry-run', () =>
 describe('query from a file', () => {
     it('as arg', () =>
         run(queryFilename)
-            .input(fixture.string)
-            .output(JSON.stringify(fixture.data.version))
+            .input(fixtureJson.string)
+            .output(JSON.stringify(fixtureJson.data.version))
     );
 
     it('as option', () =>
         run('-q', queryFilename)
-            .input(fixture.string)
-            .output(JSON.stringify(fixture.data.version))
+            .input(fixtureJson.string)
+            .output(JSON.stringify(fixtureJson.data.version))
     );
 });
 
@@ -237,7 +231,7 @@ describe('jsonxl', () => {
 
     it('--dry-run jsonxl output', () =>
         run('--dry-run', 'version', '-e', 'jsonxl')
-            .input(fixture.string)
+            .input(fixtureJson.string)
             .output('')
             .stderr(/Encoded jsonxl/)
     );
@@ -246,14 +240,14 @@ describe('jsonxl', () => {
 describe('pretty print', function() {
     it('indentation should be 4 spaces by default', () =>
         run('dependencies.keys()', '-p')
-            .input(fixture.string)
-            .output(JSON.stringify(Object.keys(fixture.data.dependencies), null, 4))
+            .input(fixtureJson.string)
+            .output(JSON.stringify(Object.keys(fixtureJson.data.dependencies), null, 4))
     );
 
     it('indentation should be as specified', () =>
         run('dependencies.keys()', '-p', '3')
-            .input(fixture.string)
-            .output(JSON.stringify(Object.keys(fixture.data.dependencies), null, 3))
+            .input(fixtureJson.string)
+            .output(JSON.stringify(Object.keys(fixtureJson.data.dependencies), null, 3))
     );
 });
 
