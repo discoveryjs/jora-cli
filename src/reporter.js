@@ -8,13 +8,15 @@ function shortNum(current, units, base = 1000) {
 
     const value = unitIdx === 0
         ? current
-        : Math.round(current);
+        : current < 100
+            ? current.toFixed(1)
+            : Math.round(current);
 
     return value + units[unitIdx];
 }
 
 function formatSize(value, bytes) {
-    return shortNum(value, [bytes ? 'bytes' : '', 'KB', 'MB'], 1000);
+    return shortNum(value, [bytes ? ' bytes' : '', 'KB', 'MB'], 1000);
 }
 function formatTime(value) {
     value = Math.round(value);
