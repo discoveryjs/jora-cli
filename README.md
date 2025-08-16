@@ -25,14 +25,15 @@ Usage:
 Options:
 
         --no-color               Suppress color output
-        --dry-run                Don't output result, only report what it would have done
+    -c, --compression [name]     Compress output: gzip (default when [name] is omitted), deflate
+        --dry-run                Don't output result, only report what it would have done (enables --verbose mode)
     -e, --encoding <encoding>    Output encoding: json (default), jsonxl (snapshot9)
     -f, --force                  Force overwriting output file
     -h, --help                   Output usage information
     -i, --input <filename>       Input file
     -o, --output <filename>      Output file (outputs to stdout if not set)
-    -p, --pretty [indent]        Pretty print with optionally specified indentation (4 spaces by default)
-    -q, --query <query>          Jora query
+    -p, --pretty [indent]        Pretty-prints output with specified indentation (4 spaces if [indent] is omitted)
+    -q, --query <query>          Jora query or path to a query file with extension .jora
         --verbose                Output debug info about actions
     -v, --version                Output version
 ```
