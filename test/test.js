@@ -32,7 +32,10 @@ const fixtureDir = path.join(__dirname, '../fixtures');
 const queryFilename = path.join(fixtureDir, 'query.jora');
 const packageJson = fixtureFile('../package.json');
 const fixtureJson = fixtureFile('data.json');
+const fixtureJsonGz = fixtureFile('data.json.gz');
+const fixtureJsonNoFormatGz = fixtureFile('data-no-format.json.gz');
 const fixtureJsonxl = fixtureFile('data.jsonxl');
+const fixtureJsonxlGz = fixtureFile('data.jsonxl.gz');
 const colorFixture = fixtureFile('color-output.json');
 const colorFixtureExpected = fixtureFile('color-output.expected').text.trim();
 const colorFixtureExpectedCompact = fixtureFile('color-output.compact.expected').text.trim();
@@ -235,6 +238,40 @@ describe('jsonxl', () => {
             .output('')
             .stderr(/Encoded jsonxl/)
     );
+});
+
+describe('compression', function() {
+    describe('gzip', () => {
+        it('gziped JSON input', () =>
+            run()
+                .input(fixtureJsonGz.raw)
+                .output(fixtureJson.string)
+        );
+
+        it('gziped JSON output', () =>
+            run('-c')
+                .input(fixtureJson.text)
+                .output(fixtureJsonNoFormatGz.raw)
+        );
+
+        it('gziped formatted JSON output', () =>
+            run('-c', '-p')
+                .input(fixtureJson.text)
+                .output(fixtureJsonGz.raw)
+        );
+
+        it('gziped JSONXL input', () =>
+            run()
+                .input(fixtureJsonxlGz.raw)
+                .output(fixtureJsonxl.string)
+        );
+
+        it('gziped JSONXL output', () =>
+            run('-c', '-e', 'jsonxl')
+                .input(fixtureJsonxl.raw)
+                .output(fixtureJsonxlGz.raw)
+        );
+    });
 });
 
 describe('pretty print', function() {

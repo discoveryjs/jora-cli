@@ -67,18 +67,38 @@ function normFormat(value) {
     throw new cli.Error(`Bad value "${value}" for ${this.long} option, supported values: ${encodings.join(', ')}`);
 }
 
+function normCompression(value) {
+    if (value === false) {
+        return false;
+    }
+
+    if (value === undefined) {
+        return 'gzip';
+    }
+
+    if (compressions.includes(value)) {
+        return value;
+    }
+
+    throw new cli.Error(`Bad value "${value}" for ${this.long} option, supported values: ${compressions.join(', ')}`);
+}
+
+function normPretty(value) {
+    return value === undefined ? 4 : Number(value) || false;
+}
+
 const encodings = ['json', 'jsonxl'];
+const compressions = ['gzip', 'deflate'];
 const command = cli.command('jora [query]')
     .version('', '', '', outputVersion)
     .option('-q, --query <query>', 'Jora query or path to a query file with extension .jora', normFilepath)
     .option('-i, --input <filename>', 'Input file', normFilepath)
     .option('-o, --output <filename>', 'Output file (outputs to stdout if not set)')
     .option('-e, --encoding <encoding>', 'Output encoding: json (default), jsonxl (snapshot9)', normFormat, 'json')
+    .option('-c, --compression [compression]', 'Output compression: gzip (default when [compression] is omitted), deflate', normCompression, false)
     .option('--dry-run', 'Don\'t output result, only report what it would have done')
     .option('-f, --force', 'Force overwriting output file')
-    .option('-p, --pretty [indent]', 'Pretty print with optionally specified indentation (4 spaces by default)', value =>
-        value === undefined ? 4 : Number(value) || false
-    , false)
+    .option('-p, --pretty [indent]', 'Pretty-prints the output using the specified indentation (defaults to 4 spaces if omitted)', normPretty, false)
     .option('--no-color', 'Suppress color output')
     // .option('-s, --sandbox', 'Output data and query in sandbox')
     .option('--verbose', 'Output debug info about actions')
@@ -114,10 +134,11 @@ const command = cli.command('jora [query]')
         const query = extractQuery(options.query || args[0]);
         const queryFn = prepareQuery(query);
         const resultData = performQuery(queryFn, input.data, undefined);
-        const encoding = options.encoding;
+        const { compression, encoding } = options;
 
         writer.log();
         await writeToDestination(resultData, {
+            compression,
             encoding,
             displayInfo,
             color: options.color && colorsSupported,
@@ -127,16 +148,6 @@ const command = cli.command('jora [query]')
             outputPath: options.output,
             inputPath: options.input
         }, setStageProgress);
-
-        // if (options.output) {
-        //     pipeline(
-        //         stringifyChunked(result, null, options.pretty),
-        //         fs.createWriteStream(options.outputFile)
-        //     );
-        // } else {
-        //     const serializedResult = JSON.stringify(result ?? null, null, options.pretty);
-        //     console.log(options.color ? colorize(serializedResult) : serializedResult);
-        // }
 
         setStageProgress('done', { time: Date.now() - startTime });
     });

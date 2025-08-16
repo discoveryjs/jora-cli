@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { pipeline } from 'node:stream/promises';
+import { createGzip, createDeflate } from 'node:zlib';
 import { encode } from './tmp/jsonxl-snapshot9.js';
 import { colorize } from './colorize.js';
 import { stringifyChunked, stringifyInfo } from '@discoveryjs/json-ext';
@@ -9,19 +10,24 @@ const now = typeof performace !== 'undefined' && typeof performance.now === 'fun
 const stringBytes = typeof Buffer === 'function' && typeof Buffer.byteLength === 'function'
     ? Buffer.byteLength
     : (str) => str.length; // incorrect but fast fallback
+const compressionTransforms = {
+    gzip: createGzip,
+    deflate: createDeflate
+};
 
 function* createChunkIterator(data, chunkSize = 64 * 1024) {
     for (let offset = 0; offset < data.length; offset += chunkSize) {
-        yield data.subarray(offset, offset + chunkSize);
+        yield Buffer.from(data.subarray(offset, offset + chunkSize));
     }
 }
 
 async function writeIntoStream(stream, data, options, setStageProgress = () => {}) {
-    const { autoEncoding, encoding } = options;
+    const { autoEncoding, encoding, compression } = options;
+    const compressionTransform = compressionTransforms[compression];
     let payload;
     let totalSize;
 
-    setStageProgress('output-encoding', { autoEncoding, encoding });
+    setStageProgress('output-encoding', { autoEncoding, encoding, compression });
 
     switch (encoding) {
         case 'jsonxl': {
@@ -58,6 +64,9 @@ async function writeIntoStream(stream, data, options, setStageProgress = () => {
         const endNewline = encoding !== 'jsonxl';
         const applyColorize = encoding === 'json' && options.color;
         const buffer = [];
+        const pipelineDest = compressionTransform
+            ? [compressionTransform(), stream]
+            : [stream];
 
         await pipeline(async function* () {
             if (isStdStream) {
@@ -89,15 +98,15 @@ async function writeIntoStream(stream, data, options, setStageProgress = () => {
             if (applyColorize) {
                 yield colorize(buffer.join(''));
             }
+        }, ...pipelineDest, { end: !isStdStream });
 
-            if (isStdStream && endNewline) {
-                yield'\n';
+        if (isStdStream) {
+            if (endNewline) {
+                stream.write('\n');
             }
 
-            if (isStdStream) {
-                setStageProgress('finish-stdout', { newline: !endNewline });
-            }
-        }, stream, { end: !isStdStream });
+            setStageProgress('finish-stdout', { newline: !endNewline });
+        }
     } else {
         // dry run
         switch (encoding) {

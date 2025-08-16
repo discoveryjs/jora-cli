@@ -1,6 +1,7 @@
 ## next
 
 - Added `gzip` and `deflate` compression support for input data
+- Added `--compression` (`-c`) option to specify output data compression (`gzip` or `deflate`). When omitted, `gzip` is used by default. For example, `jora -c -e jsonxl` will output gzipped JSONXL (the most compact size combination).
 - Updated jsonxl
     - Fixed an edge case for signed numbers in the range ±[MAX_SAFE_INTEGER/2 … MAX_SAFE_INTEGER].
     - Removed the limitation on total encoded string length exceeding the maximum string length (~500 MB for V8)

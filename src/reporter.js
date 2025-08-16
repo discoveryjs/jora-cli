@@ -97,14 +97,18 @@ export function createDefaultReporter({ log, logTemp }) {
 
             case 'input-encoding': {
                 if (params.compression) {
-                    log(`  Compression: ${params.compression} (auto detected)`);
+                    log(`  Compression: ${params.compression}`);
                 }
 
-                log(`  Encoding: ${params.encoding || '<unknown>'} (auto detected)`);
+                log(`  Encoding: ${params.encoding || '<unknown>'}`);
                 break;
             }
 
             case 'output-encoding':
+                if (params.compression) {
+                    log(`  Compression: ${params.compression}`);
+                }
+
                 log(`  Encoding: ${params.encoding || '<unknown>'}${params.autoEncoding ? ' (auto selected)' : ''}`);
                 break;
 
