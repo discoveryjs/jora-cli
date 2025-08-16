@@ -5,6 +5,7 @@ import tempfile from 'tempfile';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { parseJsonxl, style } from './helpers.js';
+import { deflateSync, gunzipSync, gzipSync, inflateSync } from 'zlib';
 
 const testFileParsers = {
     '.json': JSON.parse,
@@ -32,10 +33,7 @@ const fixtureDir = path.join(__dirname, '../fixtures');
 const queryFilename = path.join(fixtureDir, 'query.jora');
 const packageJson = fixtureFile('../package.json');
 const fixtureJson = fixtureFile('data.json');
-const fixtureJsonGz = fixtureFile('data.json.gz');
-const fixtureJsonNoFormatGz = fixtureFile('data-no-format.json.gz');
 const fixtureJsonxl = fixtureFile('data.jsonxl');
-const fixtureJsonxlGz = fixtureFile('data.jsonxl.gz');
 const colorFixture = fixtureFile('color-output.json');
 const colorFixtureExpected = fixtureFile('color-output.expected').text.trim();
 const colorFixtureExpectedCompact = fixtureFile('color-output.compact.expected').text.trim();
@@ -59,6 +57,22 @@ function run(...args) {
 
 function runWithForceColors(...args) {
     return runCli(true, args);
+}
+
+function assertCompressedFactory(type) {
+    let decompress = null;
+    switch (type) {
+        case 'gzip': decompress = gunzipSync; break;
+        case 'deflate': decompress = inflateSync; break;
+        default:
+            throw new Error('Unknown type');
+    }
+
+    return function(expected) {
+        return function(actual) {
+            assert.deepEqual(decompress(actual), expected);
+        }
+    }
 }
 
 function createStreamAssert(stream, expected) {
@@ -242,35 +256,79 @@ describe('jsonxl', () => {
 
 describe('compression', function() {
     describe('gzip', () => {
-        it('gziped JSON input', () =>
-            run()
-                .input(fixtureJsonGz.raw)
-                .output(fixtureJson.string)
-        );
+        describe('input', () => {
+            it('JSON', () =>
+                run()
+                    .input(gzipSync(fixtureJson.raw))
+                    .output(fixtureJson.string)
+            );
 
-        it('gziped JSON output', () =>
-            run('-c')
-                .input(fixtureJson.text)
-                .output(fixtureJsonNoFormatGz.raw)
-        );
+            it('JSONXL', () =>
+                run()
+                    .input(gzipSync(fixtureJsonxl.raw))
+                    .output(fixtureJsonxl.string)
+            );
+        });
 
-        it('gziped formatted JSON output', () =>
-            run('-c', '-p')
-                .input(fixtureJson.text)
-                .output(fixtureJsonGz.raw)
-        );
+        describe('output', () => {
+            const assertCompressed = assertCompressedFactory('gzip');
 
-        it('gziped JSONXL input', () =>
-            run()
-                .input(fixtureJsonxlGz.raw)
-                .output(fixtureJsonxl.string)
-        );
+            it('JSON', () =>
+                run('-c')
+                    .input(fixtureJson.text)
+                    .output(assertCompressed(Buffer.from(fixtureJson.string)))
+            );
 
-        it('gziped JSONXL output', () =>
-            run('-c', '-e', 'jsonxl')
-                .input(fixtureJsonxl.raw)
-                .output(fixtureJsonxlGz.raw)
-        );
+            it('JSON (explicit -c gzip)', () =>
+                run('-c', 'gzip')
+                    .input(fixtureJson.text)
+                    .output(assertCompressed(Buffer.from(fixtureJson.string)))
+            );
+
+            it('formatted JSON', () =>
+                run('-c', '-p')
+                    .input(fixtureJson.text)
+                    .output(assertCompressed(Buffer.from(fixtureJson.text.trim())))
+            );
+
+            it('JSONXL', () =>
+                run('-c', '-e', 'jsonxl')
+                    .input(fixtureJsonxl.raw)
+                    .output(assertCompressed(fixtureJsonxl.raw))
+            );
+        });
+    });
+
+    describe('deflate', () => {
+        describe('input', () => {
+            it('JSON', () =>
+                run()
+                    .input(deflateSync(fixtureJson.raw))
+                    .output(fixtureJson.string)
+            );
+
+            it('JSONXL', () =>
+                run()
+                    .input(deflateSync(fixtureJsonxl.raw))
+                    .output(fixtureJsonxl.string)
+            );
+        });
+
+        describe('output', () => {
+            const assertCompressed = assertCompressedFactory('deflate');
+
+            it('JSON', () =>
+                run('-c', 'deflate')
+                    .input(fixtureJson.text)
+                    .output(assertCompressed(Buffer.from(fixtureJson.string)))
+            );
+
+            it('JSONXL', () =>
+                run('-c', 'deflate', '-e', 'jsonxl')
+                    .input(fixtureJsonxl.raw)
+                    .output(assertCompressed(fixtureJsonxl.raw))
+            );
+        })
     });
 });
 
