@@ -1,11 +1,11 @@
-## next
+## 2.1.0 (August 16, 2025)
 
-- Added `gzip` and `deflate` compression support for input data
-- Added `--compression` (`-c`) option to specify output data compression (`gzip` or `deflate`). When omitted, `gzip` is used by default. For example, `jora -c -e jsonxl` will output gzipped JSONXL (the most compact size combination).
-- Updated jsonxl
+- Added `gzip` and `deflate` compression support for input data, i.e. compressed JSON or JSONXL is now consumed seamlessly
+- Added `--compression [type]` (`-c [type]`) option to specify output compression (`gzip` or `deflate`). When the type is not specified, `gzip` is used. For example, `jora -c -e jsonxl` will output gzipped JSONXL (the most compact output size combo).
+- Updated JSONXL:
     - Fixed an edge case for signed numbers in the range ±[MAX_SAFE_INTEGER/2 … MAX_SAFE_INTEGER].
-    - Removed the limitation on total encoded string length exceeding the maximum string length (~500 MB for V8)
-- Fixed displaying of output progress for jsonxl
+    - Removed the limitation that could trigger when the total encoded string length exceeded the maximum string length (~500 MB in V8)
+- Fixed output progress display for JSONXL
 
 ## 2.0.3 (July 10, 2025)
 
@@ -28,7 +28,7 @@
 - Added `--dry-run` option
 - Added `--verbose` option
 - Extended the `--query` option to accept a file path containing a Jora query, the file must have a `.jora` extension
-- Changed behavior for writing to an existing file specified with the --output option. The operation now fails unless the --force option is used
+- Changed behavior for writing to an existing file specified with the `--output` option. The operation now fails unless the `--force` option is used
 - Removed `--sandbox` option (until re-implemented)
 
 ## 1.5.1 (July 29, 2021)

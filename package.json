@@ -1,20 +1,21 @@
 {
     "name": "jora-cli",
-    "version": "2.0.3",
+    "version": "2.1.0",
     "description": "Command line interface for Jora",
+    "author": "Roman Dvornov <rdvornov@gmail.com> (https://github.com/lahmatiy)",
+    "repository": "discoveryjs/jora-cli",
+    "license": "MIT",
     "keywords": [
         "cli",
-        "jora"
+        "jora",
+        "query",
+        "json",
+        "jsonxl",
+        "gzip",
+        "deflate",
+        "stream",
+        "streaming"
     ],
-    "maintainers": [
-        {
-            "name": "Roman Dvornov",
-            "email": "rdvornov@gmail.com",
-            "github-username": "lahmatiy"
-        }
-    ],
-    "license": "MIT",
-    "repository": "discoveryjs/jora-cli",
     "bin": {
         "jora": "bin/jora"
     },
