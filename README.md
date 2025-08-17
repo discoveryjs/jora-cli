@@ -43,7 +43,7 @@ Options:
 - Get a single field from, e.g. "version":
 
   ```bash
-  jora version <package.json
+  jora <package.json version
   ```
 
 - Get all top level dependencies count:
@@ -67,7 +67,8 @@ Options:
       .[versions.size() > 1]
   ```
 
-- `jora-cli` supports queries from JSONXl, and conversion between JSON and JSONXL. JSONXL is a binary replacement for JSON. It is supported by any app built on [Discovery.js](https://github.com/discoveryjs/discovery), including [JsonDiscovery](https://github.com/discoveryjs/JsonDiscovery), [CPUpro](https://github.com/discoveryjs/cpupro) and [Statoscope](https://github.com/statoscope/statoscope). JSONXL not only saves space and transfer time but also offers faster decoding and a lower memory footprint, which is beneficial for processing large datasets.
+- Supported queries from JSONXL, and conversion JSON ⇄ JSONXL.
+    > Note: JSONXL is a binary replacement for JSON. It is supported by any app built on [Discovery.js](https://github.com/discoveryjs/discovery), including [JsonDiscovery](https://github.com/discoveryjs/JsonDiscovery), [CPUpro](https://github.com/discoveryjs/cpupro) and [Statoscope](https://github.com/statoscope/statoscope). JSONXL not only saves space and transfer time but also offers faster decoding and a lower memory footprint, which is beneficial for processing large datasets.
     - Queries for JSONXL input work the same ways as for JSON:
       ```bash
       jora <input.jsonxl "select.something"
@@ -79,6 +80,50 @@ Options:
     - Convert JSONXL into JSON
       ```
       jora <input.jsonxl >output.json
+      ```
+
+* Supported gzip and deflate as input and output
+
+    > `jora-cli` can **read** gzip/deflate on input (auto-detected) and **write** compressed output via `--compression` (`-c`).
+    > - Input compression is detected automatically for both stdin and `-i <file>`.
+    > - `--compression` (`-c`) affects **output** only; omit the name to default to `gzip`.
+    > - Compression is applied after encoding/pretty-printing.
+    > - Choose an appropriate extension for compressed files (e.g. `.json.gz`, `.jsonxl.gz`, `.deflate`).
+
+    * **Reading compressed input** (auto-detected for `gzip` and `deflate`, works for files and stdin):
+
+      ```bash
+      # query a gzipped JSON
+      jora < data.json.gz "stats.total"
+
+      # query a deflated JSON (raw deflate stream)
+      jora -i data.json.deflate "items.size()"
+
+      # pipe from cat/gunzip as well
+      cat data.json.gz | jora "select.deep.field"
+      ```
+
+    * **Writing compressed output** using `-c, --compression`:
+
+      ```bash
+      # gzip-compress output (default when name is omitted)
+      jora -i data.json -q "items.group(=>type)" -c > result.json.gz
+
+      # explicitly choose deflate
+      jora < data.json "items.pick(=>active)" -c deflate > result.json.deflate
+      ```
+
+  * **Mixing with JSONXL encoding**:
+
+      ```bash
+      # convert JSON -> JSONXL and gzip the result (most compact output combo)
+      jora < data.json > data.jsonxl.gz -e jsonxl -c
+
+      # read gzipped JSON, query, and write gzipped JSONXL in one go
+      jora < data.json.gz -q "heavy.[score > 0.9]" -e jsonxl -c > filtered.jsonxl.gz
+
+      # convert JSONXL -> JSON while keeping compression on output
+      jora < data.jsonxl -e json -c > data.json.gz
       ```
 
 ## Caveats
