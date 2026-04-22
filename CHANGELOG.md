@@ -1,3 +1,7 @@
+## next
+
+- Added support for `jsonl` encoding as input (auto detected) and output (via `--encoding jsonl` or `-e jsonl` option)
+
 ## 2.1.0 (August 16, 2025)
 
 - Added `gzip` and `deflate` compression support for input data, i.e. compressed JSON or JSONXL is now consumed seamlessly

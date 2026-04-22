@@ -7,7 +7,7 @@ try {
 } catch (e) {
     // output user frendly message if cli error
     if (cli.isCliError(e)) {
-        console.error(e.message || e);
+        console.error(`jora-cli: ${e.message || e}`);
         process.exit(2);
     }
 

@@ -1,0 +1,4 @@
+{ "id": 1, "type": "edit", "file": "package.json" }
+{ "id": 2, "type": "edit", "file": "src/encodings/jsonxl.js" }
+{ "id": 3, "type": "edit", "file": "src/encodings/jsonxl.js" }
+{ "id": 4, "type": "edit", "file": "src/encodings/json.js" }

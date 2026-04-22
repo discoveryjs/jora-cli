@@ -1,9 +1,10 @@
 import fs from 'fs';
 import path from 'path';
+import { Readable } from 'stream';
 import * as cli from 'clap';
 import jora from 'jora';
 import { colorsSupported } from './colorize.js';
-import { readFromFile, readFromStdin } from './read-from-stream.js';
+import { readFromStream } from './read-from-stream.js';
 import { createDefaultReporter, SilentWriter, StreamWriter, TTYWriter } from './reporter.js';
 import { writeToDestination } from './write.js';
 
@@ -87,14 +88,14 @@ function normPretty(value) {
     return value === undefined ? 4 : Number(value) || false;
 }
 
-const encodings = ['json', 'jsonxl'];
+const encodings = ['json', 'jsonxl', 'jsonl'];
 const compressions = ['gzip', 'deflate'];
 const command = cli.command('jora [query]')
     .version('', '', '', outputVersion)
     .option('-q, --query <query>', 'Jora query or path to a query file with extension .jora', normFilepath)
     .option('-i, --input <filename>', 'Input file', normFilepath)
     .option('-o, --output <filename>', 'Output file (outputs to stdout if not set)')
-    .option('-e, --encoding <encoding>', 'Output encoding: json (default), jsonxl (snapshot9)', normFormat, 'json')
+    .option('-e, --encoding <encoding>', 'Output encoding: json (default), jsonl, jsonxl (snapshot9)', normFormat, 'json')
     .option('-c, --compression [name]', 'Compress output: gzip (default when [name] is omitted), deflate', normCompression, false)
     .option('--dry-run', 'Don\'t output result, only report what it would have done (enables --verbose mode)')
     .option('-f, --force', 'Force overwriting output file')
@@ -117,12 +118,29 @@ const command = cli.command('jora [query]')
                 : new SilentWriter();
         const setStageProgress = createDefaultReporter(writer);
 
+        let inputStream;
+        let inputSize;
         let input;
 
+        if (!options.input) {
+            inputStream = process.stdin;
+        } else {
+            try {
+                inputSize = fs.statSync(options.input).size;
+                inputStream = fs.createReadStream(options.input, { highWaterMark: 1024 * 1024 });
+            } catch (e) {
+                if (e.code === 'ENOENT') {
+                    throw new cli.Error(`No such file or directory: ${options.input}`);
+                }
+
+                throw e;
+            }
+        }
+
+        setStageProgress('start-reading', { filepath: options.input || '<stdin>' });
+
         try {
-            input = !options.input
-                ? await readFromStdin(setStageProgress)
-                : await readFromFile(options.input, setStageProgress);
+            input = await readFromStream(Readable.toWeb(inputStream), inputSize, setStageProgress);
         } catch (e) {
             if (e.name === 'SyntaxError') {
                 throw new cli.Error('JSON parse error: ' + e.message);

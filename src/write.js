@@ -6,7 +6,7 @@ import { colorize } from './colorize.js';
 import { stringifyChunked, stringifyInfo } from '@discoveryjs/json-ext';
 import * as clap from 'clap';
 
-const now = typeof performace !== 'undefined' && typeof performance.now === 'function' ? performance.now : Date.now;
+const now = typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now.bind(performance) : Date.now;
 const stringBytes = typeof Buffer === 'function' && typeof Buffer.byteLength === 'function'
     ? Buffer.byteLength
     : (str) => str.length; // incorrect but fast fallback
@@ -52,6 +52,14 @@ async function writeIntoStream(stream, data, options, setStageProgress = () => {
             break;
         }
 
+        case 'jsonl': {
+            payload = stringifyChunked(data, {
+                space: options.pretty,
+                mode: 'jsonl'
+            });
+            break;
+        }
+
         default:
             throw new Error('Unknown output encoding ' + encoding);
     }
@@ -62,7 +70,7 @@ async function writeIntoStream(stream, data, options, setStageProgress = () => {
     if (stream) {
         const isStdStream = stream.isTTY;
         const endNewline = encoding !== 'jsonxl';
-        const applyColorize = encoding === 'json' && options.color;
+        const applyColorize = (encoding === 'json' || encoding === 'jsonl') && options.color;
         const buffer = [];
         const pipelineDest = compressionTransform
             ? [compressionTransform(), stream]
@@ -115,7 +123,8 @@ async function writeIntoStream(stream, data, options, setStageProgress = () => {
                 break;
 
             case 'json':
-                writtenSize = stringifyInfo(data, null, options.pretty).bytes;
+            case 'jsonl':
+                writtenSize = stringifyInfo(data, { space: options.pretty, mode: encoding }).bytes;
                 break;
 
             default:

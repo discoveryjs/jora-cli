@@ -34,6 +34,7 @@ const queryFilename = path.join(fixtureDir, 'query.jora');
 const packageJson = fixtureFile('../package.json');
 const fixtureJson = fixtureFile('data.json');
 const fixtureJsonxl = fixtureFile('data.jsonxl');
+const fixtureJsonl = fixtureFile('data.jsonl');
 const colorFixture = fixtureFile('color-output.json');
 const colorFixtureExpected = fixtureFile('color-output.expected').text.trim();
 const colorFixtureExpectedCompact = fixtureFile('color-output.compact.expected').text.trim();
@@ -251,6 +252,41 @@ describe('jsonxl', () => {
             .input(fixtureJson.string)
             .output('')
             .stderr(/Encoded jsonxl/)
+    );
+});
+
+describe('jsonl', () => {
+    const jsonlInput = '{"a":1}\n{"b":2}\n{"c":3}';
+    const jsonlParsed = '[{"a":1},{"b":2},{"c":3}]';
+
+    it('should read jsonl input', () =>
+        run()
+            .input(jsonlInput)
+            .output(jsonlParsed)
+    );
+
+    it('should read from jsonl file', () =>
+        run('-i', fixtureJsonl.path, '-q', 'size()')
+            .output('4')
+    );
+
+    it('JSON -> jsonl', () =>
+        run('-e', 'jsonl')
+            .input('[1,2,3]')
+            .output('1\n2\n3')
+    );
+
+    it('jsonl -> jsonl roundtrip', () =>
+        run('-e', 'jsonl')
+            .input(jsonlInput)
+            .output(jsonlInput)
+    );
+
+    it('--dry-run jsonl output', () =>
+        run('--dry-run', '-e', 'jsonl')
+            .input(jsonlInput)
+            .output('')
+            .stderr(/Written/)
     );
 });
 

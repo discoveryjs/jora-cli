@@ -1,12 +1,14 @@
-import fs from 'node:fs';
-import { Readable } from 'node:stream';
-import * as clap from 'clap';
 import * as buildinEncodings from './encodings/index.js';
-import { consumeStreamAsTypedArray, defaultStreamTransformers, ProgressTransformer, StreamTransformSelector } from './read-from-stream-utils.js';
+import {
+    consumeStreamAsTypedArray,
+    defaultStreamTransformers,
+    ProgressTransformer,
+    StreamTransformSelector
+} from './read-from-stream-utils.js';
 
-const now = typeof performace !== 'undefined' && typeof performance.now === 'function' ? performance.now : Date.now;
+const now = typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now.bind(performance) : Date.now;
 
-async function readFromStream(stream, totalSize, setStageProgress = async () => {}) {
+export async function readFromStream(stream, totalSize, setStageProgress = async () => {}) {
     const streamStartTime = now();
     const encodings = [
         buildinEncodings.jsonxl,
@@ -19,10 +21,16 @@ async function readFromStream(stream, totalSize, setStageProgress = async () => 
 
     await setStageProgress('reading', getProgressState(false));
 
-    const streamPipeline = Readable.toWeb(stream)
+    const streamPipeline = stream
         .pipeThrough(new TransformStream(new ProgressTransformer(setProgress)))
         .pipeThrough(new TransformStream(new StreamTransformSelector(defaultStreamTransformers, (name) => compression = name)));
     const reader = streamPipeline.getReader();
+    const setEncodingName = (name) => {
+        if (name !== encoding) {
+            encoding = name;
+            setStageProgress('input-encoding', { encoding, compression });
+        }
+    };
 
     try {
         const firstChunk = await reader.read();
@@ -40,7 +48,7 @@ async function readFromStream(stream, totalSize, setStageProgress = async () => 
 
                 const readerIterator = createReaderIterator(reader, firstChunk);
                 const decodeRequest = streaming
-                    ? decode(readerIterator)
+                    ? decode(readerIterator, setEncodingName)
                     : consumeStreamAsTypedArray(readerIterator).then(measureDecodingTime(decode));
                 const data = await decodeRequest;
 
@@ -92,34 +100,11 @@ async function readFromStream(stream, totalSize, setStageProgress = async () => 
             const startDecodingTime = now();
 
             try {
-                return await decode(payload);
+                return await decode(payload, setEncodingName);
             } finally {
                 decodingTime = now() - startDecodingTime;
                 setStageProgress('decoded', { encoding, time: Math.round(decodingTime) });
             }
         };
-    }
-}
-
-export function readFromStdin(setStageProgress) {
-    setStageProgress('start-reading', { filepath: '<stdin>' });
-
-    return readFromStream(process.stdin, undefined, setStageProgress);
-}
-
-export function readFromFile(filepath, setStageProgress) {
-    setStageProgress('start-reading', { filepath });
-
-    try {
-        const stat = fs.statSync(filepath);
-        const stream = fs.createReadStream(filepath, { highWaterMark: 1024 * 1024 });
-
-        return readFromStream(stream, stat.size, setStageProgress);
-    } catch (e) {
-        if (e.code === 'ENOENT') {
-            throw new clap.Error(`ERROR! No such file or directory: ${filepath}`);
-        }
-
-        throw e;
     }
 }
