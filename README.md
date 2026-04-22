@@ -4,7 +4,11 @@
 [![Build Status](https://github.com/discoveryjs/jora-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/discoveryjs/jora-cli/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/discoveryjs/jora-cli/badge.svg?branch=master)](https://coveralls.io/github/discoveryjs/jora-cli?)
 
-Command line interface for [Jora](https://github.com/discoveryjs/jora) (a JSON query language)
+CLI tool for querying and transforming data with [Jora](https://github.com/discoveryjs/jora):
+
+- Reads and writes JSON, JSONL, and JSONXL (snapshot9) — use it to query, filter, transform, or convert between these formats
+- Auto-detects `gzip` and `deflate` compression on input; can write compressed output with `--compression`/`-c`
+- Supports pretty-printing with customizable indentation
 
 ![jora-cli-demo](https://user-images.githubusercontent.com/270491/63531735-d4fd5980-c511-11e9-95ff-ed58dc94738a.gif)
 
@@ -27,10 +31,10 @@ Options:
         --no-color               Suppress color output
     -c, --compression [name]     Compress output: gzip (default when [name] is omitted), deflate
         --dry-run                Don't output result, only report what it would have done (enables --verbose mode)
-    -e, --encoding <encoding>    Output encoding: json (default), jsonxl (snapshot9)
+    -e, --encoding <encoding>    Output encoding: json (default), jsonl, jsonxl (snapshot9)
     -f, --force                  Force overwriting output file
     -h, --help                   Output usage information
-    -i, --input <filename>       Input file
+    -i, --input <filename>       Input file (reads from stdin if not set)
     -o, --output <filename>      Output file (outputs to stdout if not set)
     -p, --pretty [indent]        Pretty-prints output with specified indentation (4 spaces if [indent] is omitted)
     -q, --query <query>          Jora query or path to a query file with extension .jora
@@ -67,18 +71,34 @@ Options:
       .[versions.size() > 1]
   ```
 
-- Supported queries from JSONXL, and conversion JSON ⇄ JSONXL.
+- Supports JSONL as input and output
+
+    - Query a JSONL file
+      ```bash
+      jora <data.jsonl "items.[score > 0.9]"
+      ```
+    - Convert JSONL into JSON
+      ```bash
+      jora <data.jsonl >result.json
+      ```
+    - Convert JSON into JSONL
+      > Note: JSON dataset should be an array, otherwise the output will be the same as input
+      ```bash
+      jora <data.json >result.jsonl -e jsonl
+      ```
+
+- Supported queries for JSONXL, and conversion JSON ⇄ JSONXL.
     > Note: JSONXL is a binary replacement for JSON. It is supported by any app built on [Discovery.js](https://github.com/discoveryjs/discovery), including [JsonDiscovery](https://github.com/discoveryjs/JsonDiscovery), [CPUpro](https://github.com/discoveryjs/cpupro) and [Statoscope](https://github.com/statoscope/statoscope). JSONXL not only saves space and transfer time but also offers faster decoding and a lower memory footprint, which is beneficial for processing large datasets.
     - Queries for JSONXL input work the same ways as for JSON:
       ```bash
       jora <input.jsonxl "select.something"
       ```
-    - Convert JSON into JSONXL:
+    - Convert JSON into JSONXL
       ```bash
       jora <input.json >output.jsonxl -e jsonxl
       ```
     - Convert JSONXL into JSON
-      ```
+      ```bash
       jora <input.jsonxl >output.json
       ```
 
@@ -128,7 +148,7 @@ Options:
 
 ## Caveats
 
-`jora-cli` takes a valid JSON and produce a valid JSON as a result. However, `jora` language could produce some values that incompatable with JSON, such values are transforming:
+`jora-cli` produces a valid JSON as a result. However, `jora` language could produce some values that incompatable with JSON, such values are transforming:
 
 - `NaN`, `Infinity` and `-Infinity` are converting to `null`, that's a behaviour of `JSON.stringify()`
 - `undefined`

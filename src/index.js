@@ -93,7 +93,7 @@ const compressions = ['gzip', 'deflate'];
 const command = cli.command('jora [query]')
     .version('', '', '', outputVersion)
     .option('-q, --query <query>', 'Jora query or path to a query file with extension .jora', normFilepath)
-    .option('-i, --input <filename>', 'Input file', normFilepath)
+    .option('-i, --input <filename>', 'Input file (reads from stdin if not set)', normFilepath)
     .option('-o, --output <filename>', 'Output file (outputs to stdout if not set)')
     .option('-e, --encoding <encoding>', 'Output encoding: json (default), jsonl, jsonxl (snapshot9)', normFormat, 'json')
     .option('-c, --compression [name]', 'Compress output: gzip (default when [name] is omitted), deflate', normCompression, false)
