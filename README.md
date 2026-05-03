@@ -4,7 +4,7 @@
 [![Build Status](https://github.com/discoveryjs/jora-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/discoveryjs/jora-cli/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/discoveryjs/jora-cli/badge.svg?branch=master)](https://coveralls.io/github/discoveryjs/jora-cli?)
 
-CLI tool for querying and transforming data with [Jora](https://github.com/discoveryjs/jora):
+CLI tool for querying and transforming JSON-like data with [Jora](https://github.com/discoveryjs/jora):
 
 - Reads and writes JSON, JSONL, and JSONXL (snapshot9) — use it to query, filter, transform, or convert between these formats
 - Auto-detects `gzip` and `deflate` compression on input; can write compressed output with `--compression`/`-c`
