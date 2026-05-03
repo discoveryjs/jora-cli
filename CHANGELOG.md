@@ -1,4 +1,4 @@
-## next
+## 2.2.0 (April 22, 2026)
 
 - Added support for `jsonl` encoding as input (auto detected) and output (via `--encoding jsonl` or `-e jsonl` option)
 

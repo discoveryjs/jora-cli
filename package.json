@@ -1,7 +1,7 @@
 {
     "name": "jora-cli",
-    "version": "2.1.0",
     "description": "Command line interface for Jora",
+    "version": "2.2.0",
     "author": "Roman Dvornov <rdvornov@gmail.com> (https://github.com/lahmatiy)",
     "repository": "discoveryjs/jora-cli",
     "license": "MIT",
